@@ -1,0 +1,38 @@
+{
+  "type": "app",
+  "name": "OpenNMS",
+  "id": "opennms-app",
+  "info": {
+    "description": "Create flexible dashboards using data from OpenNMS® Horizon™ and/or OpenNMS® Meridian™.",
+    "author": {
+      "name": "The OpenNMS Group Inc.",
+      "url": "https://www.opennms.com"
+    },
+    "keywords": [],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Project Site",
+        "url": "https://github.com/OpenNMS/grafana-opennms"
+      },
+      {
+        "name": "License & Terms",
+        "url": "https://github.com/OpenNMS/grafana-opennms/blob/develop/LICENSE"
+      }
+    ],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {"type": "panel", "name": "Alarm Table"},
+    {"type": "datasource", "name": "OpenNMS Entities"}
+  ],
+  "dependencies": {
+    "grafanaVersion": "7.0.x",
+    "plugins": []
+  }
+}

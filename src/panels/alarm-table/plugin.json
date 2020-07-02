@@ -1,0 +1,12 @@
+{
+  "type": "panel",
+  "name": "Alarm Table",
+  "id": "opennms-alarm-table-panel",
+  "info": {
+    "description": "OpenNMS Alarm Table Panel for Grafana",
+    "logos": {
+      "small": "img/alarm-table.svg",
+      "large": "img/alarm-table.svg"
+    }
+  }
+}

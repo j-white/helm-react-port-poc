@@ -1,0 +1,12 @@
+{
+  "type": "datasource",
+  "name": "OpenNMS Entities",
+  "id": "opennms-entity-datasource",
+  "metrics": true,
+  "info": {
+    "logos": {
+      "small": "img/entity-ds.svg",
+      "large": "img/entity-ds.svg"
+    }
+  }
+}
