@@ -55,3 +55,4 @@ services:
     volumes:
       - ./grafana-plugins:/var/lib/grafana/plugins
       - ./dist:/var/lib/grafana/plugins/opennms-app
+      # - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt
