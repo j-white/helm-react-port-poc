@@ -42,16 +42,16 @@ const CustomActionRow: React.FC<CustomActionRowProps> = ({ action, onChange, onR
     <>
       <div className={withRowLayout}>
         <FormField
+          inputWidth={12}
           label="Label"
           labelWidth={5}
-          inputWidth={12}
           value={action.label}
           onChange={e => onChange({ ...action, label: (e.target as HTMLInputElement).value })}
         />
         <FormField
+          inputWidth={12}
           label="URL"
           labelWidth={5}
-          inputWidth={12}
           placeholder="https://"
           value={action.url}
           onChange={e => onChange({ ...action, label: (e.target as HTMLInputElement).value })}

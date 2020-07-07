@@ -37,8 +37,8 @@ const withProgressCursor = css`
 
 interface Props extends PluginConfigPageProps<OpenNMSPluginMeta> {}
 
-const ConfigTabContent: React.FC<Props> = (props: Props) => {
-  const meta: OpenNMSPluginMeta = props.plugin.meta;
+const ConfigTabContent: React.FC<Props> = ({ plugin }) => {
+  const meta = plugin.meta;
 
   const jsonData = meta.jsonData || {};
 

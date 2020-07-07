@@ -1,82 +1,127 @@
-import React, { ChangeEvent, PureComponent } from 'react';
-import { LegacyForms } from '@grafana/ui';
+import React from 'react';
+
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from './types';
+import { DataSourceHttpSettings, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 
-const { SecretFormField, FormField } = LegacyForms;
+import { EntityDataSourceOptions } from './types';
+import { MiscHttpSettings } from '../../common/MiscHttpSettings';
 
-interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
+const { Switch } = LegacyForms;
 
-interface State {}
+interface Props extends DataSourcePluginOptionsEditorProps<EntityDataSourceOptions> {}
 
-export class ConfigEditor extends PureComponent<Props, State> {
-  onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props;
-    const jsonData = {
-      ...options.jsonData,
-      path: event.target.value,
-    };
-    onOptionsChange({ ...options, jsonData });
-  };
+const useGrafanaUserTooltip = (
+  <>
+    <p>
+      Used to control whether operations on alarms are performed by the data source user, or the user that is currently
+      logged in to Grafana.
+    </p>
+    <p>
+      Supported operations are escalating, clearing, un-/acknowledging alarms as well as creating/updating a
+      journal/memo.
+    </p>
+    <p>
+      NOTE: The data source must be configured using an user with the 'admin' role in order to perform actions as other
+      users.
+    </p>
+  </>
+);
 
-  // Secure field (only sent to the backend)
-  onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props;
+const useGrafanaUserFieldTooltip = (
+  <>
+    <p>
+      Defines which field of the Grafana User should be used. This allows for fine grained control over the value
+      displayed as the "Action-Performing User" in OpenNMS.
+    </p>
+    <p>
+      Examples:
+      <ul>
+        <li>- login: ulf</li>
+        <li>- name: Ulf Blaskowitz</li>
+        <li>- email: ulf@opennms.org</li>
+      </ul>
+    </p>
+    <p>Default: login</p>
+  </>
+);
+
+const useGrafanaUserFieldOptions = [
+  { label: 'login', value: 'login' },
+  { label: 'name', value: 'name' },
+  { label: 'email', value: 'email' },
+];
+
+const defaultGrafanaUserFieldOption = 'login';
+
+export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
+  const { timeout, grafanaUserField = defaultGrafanaUserFieldOption, useGrafanaUser = false } = options.jsonData;
+
+  const handleTimeoutChange = (timeout?: number) => {
     onOptionsChange({
       ...options,
-      secureJsonData: {
-        apiKey: event.target.value,
+      jsonData: {
+        ...options.jsonData,
+        timeout,
       },
     });
   };
 
-  onResetAPIKey = () => {
-    const { onOptionsChange, options } = this.props;
+  const handleUseGrafanaUserChange = (useGrafanaUser: boolean) => {
     onOptionsChange({
       ...options,
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        apiKey: false,
-      },
-      secureJsonData: {
-        ...options.secureJsonData,
-        apiKey: '',
+      jsonData: {
+        ...options.jsonData,
+        useGrafanaUser,
       },
     });
   };
 
-  render() {
-    const { options } = this.props;
-    const { jsonData, secureJsonFields } = options;
-    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+  const handleGrafanaUserField = (grafanaUserField: string) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        grafanaUserField,
+      },
+    });
+  };
 
-    return (
+  return (
+    <div className="gf-form-group">
+      <DataSourceHttpSettings
+        defaultUrl="https://"
+        dataSourceConfig={options}
+        showAccessOptions={true}
+        onChange={onOptionsChange}
+      />
+      <MiscHttpSettings timeout={timeout} onChange={handleTimeoutChange} />
+      <h3 className="page-heading">OpenNMS Entity Datasource Details</h3>
       <div className="gf-form-group">
-        <div className="gf-form">
-          <FormField
-            label="Path"
-            labelWidth={6}
-            inputWidth={20}
-            onChange={this.onPathChange}
-            value={jsonData.path || ''}
-            placeholder="json field returned to frontend"
-          />
-        </div>
         <div className="gf-form-inline">
-          <div className="gf-form">
-            <SecretFormField
-              isConfigured={(secureJsonFields && secureJsonFields.apiKey) as boolean}
-              value={secureJsonData.apiKey || ''}
-              label="API Key"
-              placeholder="secure json field (backend only)"
-              labelWidth={6}
-              inputWidth={20}
-              onReset={this.onResetAPIKey}
-              onChange={this.onAPIKeyChange}
-            />
-          </div>
+          <Switch
+            checked={useGrafanaUser}
+            label="Use Grafana user"
+            labelClass="width-11"
+            switchClass="max-width-6"
+            // @ts-ignore
+            tooltip={useGrafanaUserTooltip}
+            onChange={e => handleUseGrafanaUserChange(Boolean(e.currentTarget.checked))}
+          />
+          {useGrafanaUser && (
+            <div className="gf-form">
+              <InlineFormLabel tooltip={useGrafanaUserFieldTooltip} width={4}>
+                Field
+              </InlineFormLabel>
+              <Select
+                options={useGrafanaUserFieldOptions}
+                value={grafanaUserField}
+                onChange={v => v.value && handleGrafanaUserField(v.value)}
+                width={12}
+              />
+            </div>
+          )}
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
