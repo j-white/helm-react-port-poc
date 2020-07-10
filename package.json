@@ -22,7 +22,8 @@
     "@types/lodash": "latest",
     "@testing-library/jest-dom": "5.4.0",
     "@testing-library/react": "^10.0.2",
-    "emotion": "10.0.27"
+    "emotion": "10.0.27",
+    "opennms": "2.0.2"
   },
   "engines": {
     "node": ">=12 <13"

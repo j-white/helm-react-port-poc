@@ -3,7 +3,7 @@ import React from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { DataSourceHttpSettings, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 
-import { EntityDataSourceOptions } from './types';
+import { defaultEntityDataSourceOptions, EntityDataSourceOptions } from './types';
 import { MiscHttpSettings } from '../../common/MiscHttpSettings';
 
 const { Switch } = LegacyForms;
@@ -51,10 +51,12 @@ const useGrafanaUserFieldOptions = [
   { label: 'email', value: 'email' },
 ];
 
-const defaultGrafanaUserFieldOption = 'login';
-
 export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
-  const { timeout, grafanaUserField = defaultGrafanaUserFieldOption, useGrafanaUser = false } = options.jsonData;
+  const {
+    timeout,
+    grafanaUserField = defaultEntityDataSourceOptions.grafanaUserField,
+    useGrafanaUser = defaultEntityDataSourceOptions.useGrafanaUser,
+  } = options.jsonData;
 
   const handleTimeoutChange = (timeout?: number) => {
     onOptionsChange({

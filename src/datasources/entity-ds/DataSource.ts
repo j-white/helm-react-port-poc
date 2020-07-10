@@ -9,21 +9,46 @@ import {
   FieldType,
 } from '@grafana/data';
 
-import { MyQuery, EntityDataSourceOptions, defaultQuery } from './types';
+import { EntityQuery, EntityDataSourceOptions, defaultEntityQuery } from './types';
 
-export class DataSource extends DataSourceApi<MyQuery, EntityDataSourceOptions> {
+// TODO: resolve build issue - opennms-js project is exporting raw TS files rather than JS + types
+// import { Query } from './query/Query';
+// import { getQueryDisplayText } from './query/QueryDisplayText';
+
+export const entityTypes = [
+  {
+    label: 'Alarms',
+    value: 'alarm',
+    queryFunction: 'alarms',
+  },
+  {
+    label: 'Nodes',
+    value: 'node',
+    queryFunction: 'nodes',
+  },
+];
+
+export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<EntityDataSourceOptions>) {
     super(instanceSettings);
   }
 
-  async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
+  /*
+  getQueryDisplayText(query: EntityQuery): string {
+    const { queryJson = '' } = query;
+    const q = Query.fromJson(queryJson);
+    return getQueryDisplayText(Query.fromJson(queryJson));
+  }
+  */
+
+  async query(options: DataQueryRequest<EntityQuery>): Promise<DataQueryResponse> {
     const { range } = options;
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
 
     // Return a constant for each query.
     const data = options.targets.map(target => {
-      const query = defaults(target, defaultQuery);
+      const query = defaults(target, defaultEntityQuery);
       return new MutableDataFrame({
         refId: query.refId,
         fields: [
