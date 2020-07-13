@@ -8,16 +8,20 @@ export interface EntityQuery extends DataQuery {
   featuredAttributes?: boolean;
   entityType?: string;
   limit?: number;
-  queryJson?: string;
+  queryJson: string;
 }
 
-type EntityQueryDefaults = Defaults<EntityQuery, 'constant' | 'featuredAttributes' | 'entityType' | 'limit'>;
+type EntityQueryDefaults = Defaults<
+  EntityQuery,
+  'constant' | 'featuredAttributes' | 'entityType' | 'limit' | 'queryJson'
+>;
 
 export const defaultEntityQuery: EntityQueryDefaults = {
   constant: 6.5,
   entityType: 'alarm',
   featuredAttributes: true,
   limit: 0,
+  queryJson: '{}',
 };
 
 /**

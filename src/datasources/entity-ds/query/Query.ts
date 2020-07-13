@@ -9,7 +9,12 @@ export class Query {
 
   static fromJson(queryJson: string): Query {
     const parsed = JSON.parse(queryJson);
-    return new Query(parsed.entityName, parsed.filter, parsed.orderBy, parsed.limit);
+    return new Query(
+      parsed.entityName,
+      Filter.fromJson(parsed.filter),
+      (parsed.orderBy || []).map((orderBy: any) => OrderBy.fromJson(orderBy)),
+      parsed.limit
+    );
   }
 
   constructor(entityName = 'alarm', filter = new Filter(), orderBy = [], limit = 0) {
