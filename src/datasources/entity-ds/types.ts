@@ -2,13 +2,6 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 import { Defaults } from '../../types';
 
-export type EntityType = 'alarm' | 'node';
-
-export interface EntityQueryStatement {
-  entityType: EntityType;
-  limit: number;
-}
-
 export interface EntityQuery extends DataQuery {
   featuredAttributes?: boolean;
   statement?: EntityQueryStatement;
@@ -20,9 +13,58 @@ export const defaultEntityQuery: EntityQueryDefaults = {
   featuredAttributes: true,
   statement: {
     entityType: 'alarm',
-    limit: 0,
+    filter: {
+      clauses: [],
+      orderBy: [],
+      limit: 0,
+    },
   },
 };
+
+export interface EntityQueryStatement {
+  entityType: EntityType;
+  filter: EntityQueryStatementFilter;
+}
+
+export type EntityType = 'alarm' | 'node';
+
+export interface EntityQueryStatementFilter {
+  clauses: EntityQueryStatementClause[];
+  orderBy: EntityQueryStatementOrderBy[];
+  limit: number;
+}
+
+export interface EntityQueryStatementClause {
+  restriction: EntityQueryStatementRestriction | EntityQueryStatementNestedRestriction;
+  operator: EntityQueryStatementOperator;
+}
+
+export interface EntityQueryStatementRestriction {
+  attribute: string;
+  comparator: EntityQueryStatementComparator;
+  value?: any;
+}
+
+export interface EntityQueryStatementComparator {
+  label: 'EQ' | 'NE' | 'ILIKE' | 'LIKE' | 'GT' | 'LT' | 'GE' | 'LE' | 'NULL' | 'NOTNULL';
+}
+
+export interface EntityQueryStatementNestedRestriction {
+  clauses: EntityQueryStatementClause[];
+}
+
+export interface EntityQueryStatementOperator {
+  label: 'AND' | 'OR';
+}
+
+export interface EntityQueryStatementOrderBy {
+  attribute: string;
+  order: EntityQueryStatementOrder;
+}
+
+export interface EntityQueryStatementOrder {
+  label: 'ASC' | 'DESC';
+}
 
 /**
  * These are options configured for each DataSource instance

@@ -57,7 +57,8 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
 
   console.log('query:', JSON.stringify(query, null, 2));
 
-  const { entityType, limit } = statement;
+  const { entityType, filter } = statement;
+  const { limit } = filter;
 
   const handleEntityTypeChange = (entityType: EntityType) => {
     onChange({ ...query, statement: { ...statement, entityType } });
@@ -66,7 +67,7 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
 
   // TODO: debounce 250ms? (or is this handled in the DataSourceAPI?)
   const handleLimitChange = (limit: number) => {
-    onChange({ ...query, statement: { ...statement, limit } });
+    onChange({ ...query, statement: { ...statement, filter: { ...filter, limit } } });
     onRunQuery();
   };
 

@@ -47,7 +47,7 @@ function getOrderBysDisplayText(orderBys: OrderBy[]): string {
 }
 
 export function getQueryStatementDisplayText(statement: QueryStatement): string {
-  const { entityType, filter, orderBy, limit } = statement;
+  const { entityType, filter, orderBy } = statement;
   let queryText = `select all ${entityType}s`;
   if (filter.clauses.length > 0) {
     const clausesDisplayText = getClausesDisplayText(filter.clauses);
@@ -57,8 +57,8 @@ export function getQueryStatementDisplayText(statement: QueryStatement): string 
     const orderByDisplayText = getOrderBysDisplayText(orderBy);
     queryText += ` order by ${orderByDisplayText}`;
   }
-  if (limit > 0) {
-    queryText += ` limit ${limit}`;
+  if (filter.limit > 0) {
+    queryText += ` limit ${filter.limit}`;
   }
   return queryText;
 }
