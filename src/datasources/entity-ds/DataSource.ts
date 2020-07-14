@@ -9,23 +9,10 @@ import {
   FieldType,
 } from '@grafana/data';
 
-import { EntityQuery, EntityDataSourceOptions, defaultEntityQuery } from './types';
+import { EntityDataSourceOptions, EntityQuery, defaultEntityQuery } from './types';
 
-import { Query } from './query/Query';
-import { getQueryDisplayText } from './query/QueryDisplayText';
-
-export const entityTypes = [
-  {
-    label: 'Alarms',
-    value: 'alarm',
-    queryFunction: 'alarms',
-  },
-  {
-    label: 'Nodes',
-    value: 'node',
-    queryFunction: 'nodes',
-  },
-];
+import { QueryStatement } from './query/QueryStatement';
+import { getQueryStatementDisplayText } from './query/QueryDisplayText';
 
 export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<EntityDataSourceOptions>) {
@@ -34,8 +21,8 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
 
   getQueryDisplayText(query: EntityQuery): string {
     try {
-      const { queryJson = defaultEntityQuery.queryJson } = query;
-      return getQueryDisplayText(Query.fromJson(queryJson));
+      const { statement = defaultEntityQuery.statement } = query;
+      return getQueryStatementDisplayText(QueryStatement.fromJson(statement));
     } catch (error) {
       return `ERROR: ${error}`;
     }
@@ -46,16 +33,21 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
 
-    // Return a constant for each query.
     const data = options.targets.map(target => {
       const query = defaults(target, defaultEntityQuery);
-      return new MutableDataFrame({
+      const frame = new MutableDataFrame({
         refId: query.refId,
         fields: [
-          { name: 'Time', values: [from, to], type: FieldType.time },
-          { name: 'Value', values: [query.constant, query.constant], type: FieldType.number },
+          { name: 'time', type: FieldType.time },
+          { name: 'value', type: FieldType.number },
         ],
       });
+      const duration = to - from;
+      const step = duration / 1000;
+      for (let t = 0; t < duration; t += step) {
+        frame.add({ time: from + t, value: Math.sin((2 * Math.PI * t) / duration) });
+      }
+      return frame;
     });
 
     return { data };

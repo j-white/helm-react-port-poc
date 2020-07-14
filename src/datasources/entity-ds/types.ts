@@ -2,26 +2,26 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 import { Defaults } from '../../types';
 
-// TODO: remove entityType and limit - use deserialized Query properties instead
-export interface EntityQuery extends DataQuery {
-  constant?: number;
-  featuredAttributes?: boolean;
-  entityType?: string;
-  limit?: number;
-  queryJson: string;
+export type EntityType = 'alarm' | 'node';
+
+export interface EntityQueryStatement {
+  entityType: EntityType;
+  limit: number;
 }
 
-type EntityQueryDefaults = Defaults<
-  EntityQuery,
-  'constant' | 'featuredAttributes' | 'entityType' | 'limit' | 'queryJson'
->;
+export interface EntityQuery extends DataQuery {
+  featuredAttributes?: boolean;
+  statement?: EntityQueryStatement;
+}
+
+type EntityQueryDefaults = Defaults<EntityQuery, 'featuredAttributes' | 'statement'>;
 
 export const defaultEntityQuery: EntityQueryDefaults = {
-  constant: 6.5,
-  entityType: 'alarm',
   featuredAttributes: true,
-  limit: 0,
-  queryJson: '{}',
+  statement: {
+    entityType: 'alarm',
+    limit: 0,
+  },
 };
 
 /**

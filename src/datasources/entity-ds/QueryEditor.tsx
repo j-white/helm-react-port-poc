@@ -4,12 +4,28 @@ import { css } from 'emotion';
 import { Icon, InlineFormLabel, LegacyForms, Select, Tooltip } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 
-import { DataSource, entityTypes } from './DataSource';
-import { defaultEntityQuery, EntityDataSourceOptions, EntityQuery } from './types';
+import { DataSource } from './DataSource';
+import { EntityDataSourceOptions, EntityQuery, EntityType, defaultEntityQuery } from './types';
 
 const { FormField, Switch } = LegacyForms;
 
 type Props = QueryEditorProps<DataSource, EntityQuery, EntityDataSourceOptions>;
+
+interface EntityTypeOption {
+  label: string;
+  value: EntityType;
+}
+
+const entityTypeOptions: EntityTypeOption[] = [
+  {
+    label: 'Alarms',
+    value: 'alarm',
+  },
+  {
+    label: 'Nodes',
+    value: 'node',
+  },
+];
 
 const withWarningColor = css`
   color: rgb(229, 189, 28);
@@ -34,21 +50,23 @@ const limitTooltip = (
 const featuredAttributesTooltip = 'Toggles whether featured attributes or all attributes are shown';
 
 export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) => {
-  // TOOD: refactor to use Query and reference its entityType and limit
   const {
-    entityType = defaultEntityQuery.entityType,
     featuredAttributes = defaultEntityQuery.featuredAttributes,
-    limit = defaultEntityQuery.limit,
+    statement = defaultEntityQuery.statement,
   } = query;
 
-  const handleEntityTypeChange = (entityType: string) => {
-    onChange({ ...query, entityType });
+  console.log('query:', JSON.stringify(query, null, 2));
+
+  const { entityType, limit } = statement;
+
+  const handleEntityTypeChange = (entityType: EntityType) => {
+    onChange({ ...query, statement: { ...statement, entityType } });
     onRunQuery();
   };
 
   // TODO: debounce 250ms? (or is this handled in the DataSourceAPI?)
   const handleLimitChange = (limit: number) => {
-    onChange({ ...query, limit });
+    onChange({ ...query, statement: { ...statement, limit } });
     onRunQuery();
   };
 
@@ -65,7 +83,7 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
             SELECT
           </InlineFormLabel>
           <Select
-            options={entityTypes}
+            options={entityTypeOptions}
             value={entityType}
             width={12}
             onChange={v => v.value && handleEntityTypeChange(v.value)}
