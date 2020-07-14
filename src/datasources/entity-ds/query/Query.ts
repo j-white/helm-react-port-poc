@@ -1,5 +1,4 @@
-import { Filter } from 'opennms/src/api/Filter';
-import { OrderBy } from 'opennms/src/api/OrderBy';
+import { Filter, OrderBy } from 'opennms-js-ts';
 
 export class Query {
   entityName: string;

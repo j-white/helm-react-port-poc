@@ -1,6 +1,6 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
-type Defaults<T, K extends keyof T> = Required<Pick<T, K>>;
+import { Defaults } from '../../types';
 
 // TODO: remove entityType and limit - use deserialized Query properties instead
 export interface EntityQuery extends DataQuery {

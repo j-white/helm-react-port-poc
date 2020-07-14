@@ -1,8 +1,4 @@
-import { Comparators } from 'opennms/src/api/Comparator';
-import { Clause } from 'opennms/src/api/Clause';
-import { NestedRestriction } from 'opennms/src/api/NestedRestriction';
-import { OrderBy } from 'opennms/src/api/OrderBy';
-import { Restriction } from 'opennms/src/api/Restriction';
+import { Comparators, Clause, NestedRestriction, OrderBy, Restriction } from 'opennms-js-ts';
 
 import { Query } from './Query';
 

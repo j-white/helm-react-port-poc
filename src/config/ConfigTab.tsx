@@ -1,19 +1,12 @@
 import React, { PureComponent, useState } from 'react';
 import { css, cx } from 'emotion';
-import uniqueId from 'lodash/uniqueId';
 
 import { PluginConfigPageProps } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
 import { CustomActionSettings } from './CustomActionsSettings';
-import { OpenNMSPluginMeta } from '../types';
-
-export interface CustomAction {
-  id: string;
-  label: string;
-  url: string;
-}
+import { defaultOpenNMSAppConfig, OpenNMSCustomAction, OpenNMSPluginMeta } from '../types';
 
 function updateSettings(pluginId: string, settings: Partial<OpenNMSPluginMeta>): Promise<any> {
   return getBackendSrv().post(`/api/plugins/${pluginId}/settings`, settings);
@@ -40,14 +33,10 @@ interface Props extends PluginConfigPageProps<OpenNMSPluginMeta> {}
 const ConfigTabContent: React.FC<Props> = ({ plugin }) => {
   const meta = plugin.meta;
 
-  const jsonData = meta.jsonData || {};
+  const jsonData = meta.jsonData || defaultOpenNMSAppConfig;
 
   const [loading, setLoading] = useState<boolean>(false);
-  const [actions, setActions] = useState<CustomAction[]>(
-    jsonData.actions
-      ? jsonData.actions.map((action: { label: string; url: string }) => ({ ...action, id: uniqueId() }))
-      : []
-  );
+  const [actions, setActions] = useState<OpenNMSCustomAction[]>(jsonData.actions);
 
   const update = async (settings: Partial<OpenNMSPluginMeta>) => {
     try {
@@ -59,7 +48,7 @@ const ConfigTabContent: React.FC<Props> = ({ plugin }) => {
     }
   };
 
-  const handleActionsChange = (actions: CustomAction[]) => {
+  const handleActionsChange = (actions: OpenNMSCustomAction[]) => {
     setActions(actions);
   };
 
@@ -83,7 +72,7 @@ const ConfigTabContent: React.FC<Props> = ({ plugin }) => {
       pinned: meta.enabled,
       jsonData: {
         ...jsonData,
-        actions: actions.map(({ id, ...remaining }) => ({ ...remaining })),
+        actions,
       },
     });
   };

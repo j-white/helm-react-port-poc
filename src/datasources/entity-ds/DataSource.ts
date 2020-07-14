@@ -11,9 +11,8 @@ import {
 
 import { EntityQuery, EntityDataSourceOptions, defaultEntityQuery } from './types';
 
-// TODO: resolve build issue - opennms-js project is exporting raw TS files rather than JS + types
-// import { Query } from './query/Query';
-// import { getQueryDisplayText } from './query/QueryDisplayText';
+import { Query } from './query/Query';
+import { getQueryDisplayText } from './query/QueryDisplayText';
 
 export const entityTypes = [
   {
@@ -33,13 +32,14 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
     super(instanceSettings);
   }
 
-  /*
   getQueryDisplayText(query: EntityQuery): string {
-    const { queryJson = '' } = query;
-    const q = Query.fromJson(queryJson);
-    return getQueryDisplayText(Query.fromJson(queryJson));
+    try {
+      const { queryJson = defaultEntityQuery.queryJson } = query;
+      return getQueryDisplayText(Query.fromJson(queryJson));
+    } catch (error) {
+      return `ERROR: ${error}`;
+    }
   }
-  */
 
   async query(options: DataQueryRequest<EntityQuery>): Promise<DataQueryResponse> {
     const { range } = options;

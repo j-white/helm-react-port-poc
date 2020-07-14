@@ -1,16 +1,12 @@
 import React from 'react';
 import { css } from 'emotion';
-import uniqueId from 'lodash/uniqueId';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Button, Icon, LegacyForms, Tooltip } from '@grafana/ui';
 
-const { FormField } = LegacyForms;
+import { OpenNMSCustomAction } from '../types';
 
-export interface CustomAction {
-  id: string;
-  label: string;
-  url: string;
-}
+const { FormField } = LegacyForms;
 
 const withRightMargin = css`
   margin-right: 8px;
@@ -32,8 +28,8 @@ const withRowLayout = css`
 `;
 
 interface CustomActionRowProps {
-  action: CustomAction;
-  onChange: (proposed: CustomAction) => void;
+  action: OpenNMSCustomAction;
+  onChange: (proposed: OpenNMSCustomAction) => void;
   onRemove: (id: string) => void;
 }
 
@@ -54,7 +50,7 @@ const CustomActionRow: React.FC<CustomActionRowProps> = ({ action, onChange, onR
           labelWidth={5}
           placeholder="https://"
           value={action.url}
-          onChange={e => onChange({ ...action, label: (e.target as HTMLInputElement).value })}
+          onChange={e => onChange({ ...action, url: (e.target as HTMLInputElement).value })}
         />
         <Button variant="secondary" size="xs" onClick={() => onRemove(action.id)}>
           <Icon name="trash-alt" />
@@ -65,16 +61,18 @@ const CustomActionRow: React.FC<CustomActionRowProps> = ({ action, onChange, onR
 };
 
 interface Props {
-  actions: CustomAction[];
-  onChange: (actions: CustomAction[]) => void;
+  actions: OpenNMSCustomAction[];
+  onChange: (actions: OpenNMSCustomAction[]) => void;
 }
 
 export const CustomActionSettings: React.FC<Props> = ({ actions, onChange }) => {
+  console.log('actions', JSON.stringify(actions, null, 2));
+
   const handleAdd = () => {
-    onChange([...actions, { id: uniqueId(), label: '', url: '' }]);
+    onChange([...actions, { id: uuidv4(), label: '', url: '' }]);
   };
 
-  const handleChange = (proposed: CustomAction) => {
+  const handleChange = (proposed: OpenNMSCustomAction) => {
     onChange(actions.map(action => (action.id === proposed.id ? proposed : action)));
   };
 
