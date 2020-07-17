@@ -1464,13 +1464,13 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
       <div className="gf-form-group">
         <div className="gf-form">
           <FormField
+            inputWidth={4}
             label="Limit"
             labelWidth={8}
             placeholder="Query Limit"
             tooltip="Limit the number of items returned (0=unlimited)"
             type="number"
             value={limit}
-            width={4}
             onChange={e => handleLimitChange(Number(e.currentTarget.value))}
           />
           {limit > 0 && (

@@ -38,16 +38,18 @@ const comparatorOptions: ComparatorOption[] = [
 
 type Props = {
   comparator: EntityQueryStatementComparator;
+  disabled?: boolean;
   onChange: (value: EntityQueryStatementComparator) => void;
 };
 
-export const ComparatorEditor: React.FC<Props> = ({ comparator, onChange }) => {
+export const RestrictionComparatorEditor: React.FC<Props> = ({ comparator, disabled, onChange }) => {
   const handleComparatorChange = (comparatorType: EntityQueryStatementComparatorType) => {
     onChange({ label: comparatorType });
   };
 
   return (
     <Select
+      disabled={disabled}
       options={comparatorOptions}
       value={comparator.label}
       width={8}

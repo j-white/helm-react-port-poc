@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 import { Select } from '@grafana/ui';
 
@@ -20,13 +20,9 @@ export const RestrictionAttributeEditor: React.FC<Props> = ({ attribute, attribu
     onChange(attribute);
   };
 
-  const handleAttributeCreate = (attribute: string) => {
-    onChange(attribute);
-  };
-
   return (
     <Select
-      className={cx(!attribute && withMinWidth)}
+      className={withMinWidth}
       menuPosition="fixed"
       options={attributeOptions}
       placeholder="Select attribute..."
@@ -34,7 +30,6 @@ export const RestrictionAttributeEditor: React.FC<Props> = ({ attribute, attribu
       // @ts-ignore
       width="auto"
       onChange={v => v.value && handleAttributeChange(v.value)}
-      onCreateOption={handleAttributeCreate}
     />
   );
 };
