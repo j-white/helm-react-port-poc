@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, KeyValue } from '@grafana/data';
 
 import { Defaults } from '../../types';
 
@@ -7,18 +7,10 @@ export interface EntityQuery extends DataQuery {
   statement?: EntityQueryStatement;
 }
 
-type EntityQueryDefaults = Defaults<EntityQuery, 'featuredAttributes' | 'statement'>;
+type EntityQueryDefaults = Defaults<EntityQuery, 'featuredAttributes'>;
 
 export const defaultEntityQuery: EntityQueryDefaults = {
   featuredAttributes: true,
-  statement: {
-    entityType: 'alarm',
-    filter: {
-      clauses: [],
-      orderBy: [],
-      limit: 0,
-    },
-  },
 };
 
 export interface EntityQueryStatement {
@@ -35,6 +27,7 @@ export interface EntityQueryStatementFilter {
 }
 
 export interface EntityQueryStatementClause {
+  id: string;
   restriction: EntityQueryStatementRestriction | EntityQueryStatementNestedRestriction;
   operator: EntityQueryStatementOperator;
 }
@@ -45,25 +38,59 @@ export interface EntityQueryStatementRestriction {
   value?: any;
 }
 
+export type EntityQueryStatementComparatorType = 'EQ' | 'NE' | 'GT' | 'LT' | 'GE' | 'LE';
+
 export interface EntityQueryStatementComparator {
-  label: 'EQ' | 'NE' | 'ILIKE' | 'LIKE' | 'GT' | 'LT' | 'GE' | 'LE' | 'NULL' | 'NOTNULL';
+  label: EntityQueryStatementComparatorType;
 }
 
 export interface EntityQueryStatementNestedRestriction {
   clauses: EntityQueryStatementClause[];
 }
 
+export type EntityQueryStatementOperatorType = 'AND' | 'OR';
+
 export interface EntityQueryStatementOperator {
-  label: 'AND' | 'OR';
+  label: EntityQueryStatementOperatorType;
 }
 
 export interface EntityQueryStatementOrderBy {
+  id: string;
   attribute: string;
   order: EntityQueryStatementOrder;
 }
 
+export type EntityQueryStatementOrderType = 'ASC' | 'DESC';
+
 export interface EntityQueryStatementOrder {
-  label: 'ASC' | 'DESC';
+  label: EntityQueryStatementOrderType;
+}
+
+export interface EntityPropertiesResult {
+  offset: number;
+  count: number;
+  totalCount: number;
+  searchProperty: EntityProperty[];
+}
+
+export type EntityPropertyType = 'BOOLEAN' | 'FLOAT' | 'INTEGER' | 'IP_ADDRESS' | 'LONG' | 'STRING' | 'TIMESTAMP';
+
+export interface EntityProperty {
+  id: string;
+  name: string;
+  type: EntityPropertyType;
+  orderBy: boolean;
+  iplike: boolean;
+  values?: KeyValue<string>;
+}
+
+export interface EntityAttributeOption {
+  label: string;
+  value: string;
+  type: EntityPropertyType;
+  orderBy: boolean;
+  iplike: boolean;
+  values?: KeyValue<string>;
 }
 
 /**
