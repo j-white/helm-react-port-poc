@@ -48,7 +48,7 @@ export function createEmptyOrderBy(): EntityQueryStatementOrderBy {
 
 export function createDefaultFilter(): EntityQueryStatementFilter {
   return {
-    clauses: [createEmptyClause(), createEmptyClause()],
+    clauses: [createEmptyClause()],
     orderBy: [createEmptyOrderBy()],
     limit: 0,
   };
