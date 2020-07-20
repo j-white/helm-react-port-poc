@@ -31,7 +31,7 @@ type Props = {
   onChange: (value: EntityQueryStatementOperator) => void;
 };
 
-export const OperatorEditor: React.FC<Props> = ({ operator, onChange }) => {
+export const ClauseOperatorEditor: React.FC<Props> = ({ operator, onChange }) => {
   const handleOperatorChange = (operatorType: EntityQueryStatementOperatorType) => {
     onChange({ label: operatorType });
   };

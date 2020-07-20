@@ -52,7 +52,7 @@ const CustomActionRow: React.FC<CustomActionRowProps> = ({ action, onChange, onR
           value={action.url}
           onChange={e => onChange({ ...action, url: (e.target as HTMLInputElement).value })}
         />
-        <Button variant="secondary" size="xs" onClick={() => onRemove(action.id)}>
+        <Button variant="secondary" size="xs" title="Remove action" onClick={() => onRemove(action.id)}>
           <Icon name="trash-alt" />
         </Button>
       </div>

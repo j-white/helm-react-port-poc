@@ -1,7 +1,6 @@
 import React from 'react';
-import { css, cx } from 'emotion';
 
-import { InlineFormLabel } from '@grafana/ui';
+import { Button, Icon, InlineFormLabel } from '@grafana/ui';
 
 import {
   EntityAttributeOption,
@@ -11,14 +10,9 @@ import {
   EntityQueryStatementRestriction,
 } from 'datasources/entity-ds/types';
 
-import { OperatorEditor } from './OperatorEditor';
+import { ClauseOperatorEditor } from './ClauseOperatorEditor';
 import { RestrictionEditor } from './RestrictionEditor';
-
-const withChildRightMargins = css`
-  > *:not(:last-child) {
-    margin-right: 4px;
-  }
-`;
+import { FieldInputWithActions } from 'common/FieldInputWithActions';
 
 type Props = {
   attributeOptions: EntityAttributeOption[];
@@ -52,32 +46,46 @@ export const ClauseEditor: React.FC<Props> = ({ attributeOptions, clause, index,
 
   return (
     <div className="gf-form">
-      <div className={cx('gf-form-inline', withChildRightMargins)}>
-        {index === 0 ? (
-          <InlineFormLabel className="query-keyword" width={8}>
-            WHERE
-          </InlineFormLabel>
-        ) : (
-          <OperatorEditor operator={clause.operator} onChange={handleOperatorChange} />
-        )}
-        {restriction && (
+      {index === 0 ? (
+        <InlineFormLabel className="query-keyword" width={8}>
+          WHERE
+        </InlineFormLabel>
+      ) : (
+        <ClauseOperatorEditor operator={clause.operator} onChange={handleOperatorChange} />
+      )}
+      {restriction && (
+        <FieldInputWithActions
+          actions={
+            <>
+              <Button variant="secondary" size="xs" title="Add restriction" onClick={() => {}}>
+                <Icon name="plus" />
+              </Button>
+              <Button variant="secondary" size="xs" onClick={() => {}}>
+                <Icon name="folder-plus" title="Add nested restriction" />
+              </Button>
+              <Button variant="secondary" size="xs" onClick={() => {}}>
+                <Icon name="trash-alt" title="Remove restriction" />
+              </Button>
+            </>
+          }
+        >
           <RestrictionEditor
             attributeOptions={attributeOptions}
             restriction={restriction}
             onChange={handleRestrictionChange}
           />
-        )}
-        {nestedRestriction &&
-          nestedRestriction.clauses.map((clause, index) => (
-            <ClauseEditor
-              key={clause.id}
-              clause={clause}
-              attributeOptions={attributeOptions}
-              index={index}
-              onChange={handleNestedRestrictionClauseChange}
-            />
-          ))}
-      </div>
+        </FieldInputWithActions>
+      )}
+      {nestedRestriction &&
+        nestedRestriction.clauses.map((clause, index) => (
+          <ClauseEditor
+            key={clause.id}
+            clause={clause}
+            attributeOptions={attributeOptions}
+            index={index}
+            onChange={handleNestedRestrictionClauseChange}
+          />
+        ))}
     </div>
   );
 };

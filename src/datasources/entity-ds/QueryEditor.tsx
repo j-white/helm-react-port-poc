@@ -2,10 +2,9 @@ import React from 'react';
 import { css } from 'emotion';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Icon, InlineFormLabel, LegacyForms, Select, Tooltip } from '@grafana/ui';
+import { Button, Icon, InlineFormLabel, Input, LegacyForms, Select, Tooltip } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 
-import { DataSource } from './DataSource';
 import {
   defaultEntityQuery,
   EntityAttributeOption,
@@ -15,10 +14,16 @@ import {
   EntityQueryStatement,
   EntityQueryStatementClause,
   EntityType,
+  EntityQueryStatementOrderBy,
 } from './types';
-import { ClauseEditor } from './query/editor/ClauseEditor';
 
-const { FormField, Switch } = LegacyForms;
+import { DataSource } from './DataSource';
+
+import { ClauseEditor } from './query/editor/ClauseEditor';
+import { OrderByEditor } from './query/editor/OrderByEditor';
+import { FieldInputWithActions } from 'common/FieldInputWithActions';
+
+const { Switch } = LegacyForms;
 
 // TODO: temporarily inlined data - fetch via datasource, once possible
 const properties: EntityPropertiesResult = {
@@ -1343,7 +1348,9 @@ const orderByTooltop = (
   </>
 );
 
-const limitTooltip = (
+const limitTooltip = 'Limit the number of items returned (0=unlimited)';
+
+const limitWarningTooltip = (
   <>
     <b>Note:</b> When using limits, column sorting only applies to the returned results.
   </>
@@ -1365,13 +1372,21 @@ function createEmptyClause(): EntityQueryStatementClause {
   };
 }
 
+function createEmptyOrderBy(): EntityQueryStatementOrderBy {
+  return {
+    id: uuidv4(),
+    attribute: '',
+    order: { label: 'ASC' },
+  };
+}
+
 function createDefaultStatement(): EntityQueryStatement {
   console.log('called');
   return {
     entityType: 'alarm',
     filter: {
       clauses: [createEmptyClause()],
-      orderBy: [],
+      orderBy: [createEmptyOrderBy()],
       limit: 0,
     },
   };
@@ -1391,7 +1406,7 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
   console.log('query:', JSON.stringify(query, null, 2));
 
   const { entityType, filter } = statement;
-  const { clauses, limit } = filter;
+  const { clauses, limit, orderBy } = filter;
 
   const handleEntityTypeChange = (entityType: EntityType) => {
     onChange({ ...query, statement: { ...statement, entityType } });
@@ -1421,6 +1436,25 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
   const handleLimitChange = (limit: number) => {
     onChange({ ...query, statement: { ...statement, filter: { ...filter, limit } } });
     onRunQuery();
+  };
+
+  const handleOrderByChange = (o: EntityQueryStatementOrderBy) => {
+    const index = orderBy.findIndex(matchById(o));
+    if (index < 0) {
+      throw new Error('Clause not found.');
+    }
+    onChange({
+      ...query,
+      statement: {
+        ...statement,
+        filter: {
+          ...filter,
+          orderBy: Object.assign([...orderBy], {
+            [index]: o,
+          }),
+        },
+      },
+    });
   };
 
   const handleFeaturedAttributesChange = (featuredAttributes: boolean) => {
@@ -1454,33 +1488,53 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
           />
         ))}
         <div className="gf-form">
-          <div className="gf-form-inline">
-            <InlineFormLabel className="query-keyword" tooltip={orderByTooltop} width={8}>
-              ORDER BY
-            </InlineFormLabel>
-          </div>
+          <InlineFormLabel className="query-keyword" tooltip={orderByTooltop} width={8}>
+            ORDER BY
+          </InlineFormLabel>
+          <FieldInputWithActions
+            actions={
+              <>
+                <Button variant="secondary" size="xs" title="Add attribute" onClick={() => {}}>
+                  <Icon name="plus" />
+                </Button>
+                <Button variant="secondary" size="xs" onClick={() => {}}>
+                  <Icon name="trash-alt" title="Remove attribute" />
+                </Button>
+              </>
+            }
+          >
+            {orderBy.map((orderBy, index) => (
+              <OrderByEditor
+                key={orderBy.id}
+                attributeOptions={attributeOptions}
+                orderBy={orderBy}
+                onChange={handleOrderByChange}
+              />
+            ))}
+          </FieldInputWithActions>
         </div>
-      </div>
-      <div className="gf-form-group">
         <div className="gf-form">
-          <FormField
-            inputWidth={4}
-            label="Limit"
-            labelWidth={8}
-            placeholder="Query Limit"
-            tooltip="Limit the number of items returned (0=unlimited)"
+          <InlineFormLabel className="query-keyword" tooltip={limitTooltip} width={8}>
+            LIMIT
+          </InlineFormLabel>
+          <Input
+            min={0}
+            step={1}
             type="number"
-            value={limit}
+            value={limit + ''} // https://github.com/facebook/react/issues/9402
+            width={8}
             onChange={e => handleLimitChange(Number(e.currentTarget.value))}
           />
           {limit > 0 && (
             <InlineFormLabel width="auto">
-              <Tooltip content={limitTooltip}>
+              <Tooltip content={limitWarningTooltip}>
                 <Icon className={withWarningColor} name="exclamation-triangle" size="lg" />
               </Tooltip>
             </InlineFormLabel>
           )}
         </div>
+      </div>
+      <div className="gf-form-group">
         <div className="gf-form">
           <Switch
             checked={featuredAttributes}
