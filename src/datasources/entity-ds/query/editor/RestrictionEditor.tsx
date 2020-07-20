@@ -1,10 +1,6 @@
 import React from 'react';
 
-import {
-  EntityAttributeOption,
-  EntityQueryStatementComparator,
-  EntityQueryStatementRestriction,
-} from '../../../../datasources/entity-ds/types';
+import { EntityAttributeOption, EntityQueryStatementComparator, EntityQueryStatementRestriction } from '../../types';
 
 import { RestrictionAttributeEditor } from './RestrictionAttributeEditor';
 import { RestrictionComparatorEditor } from './RestrictionComparatorEditor';

@@ -12,10 +12,4 @@ export interface OpenNMSAppConfig extends KeyValue {
   actions: OpenNMSCustomAction[];
 }
 
-type OpenNMSAppConfigDefaults = Defaults<OpenNMSAppConfig, 'actions'>;
-
-export const defaultOpenNMSAppConfig: OpenNMSAppConfigDefaults = {
-  actions: [],
-};
-
 export interface OpenNMSPluginMeta extends AppPluginMeta<OpenNMSAppConfig> {}

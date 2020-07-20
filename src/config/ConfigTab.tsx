@@ -6,7 +6,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
 import { CustomActionSettings } from './CustomActionsSettings';
-import { defaultOpenNMSAppConfig, OpenNMSCustomAction, OpenNMSPluginMeta } from '../types';
+import { defaultOpenNMSAppConfig } from '../defaults';
+import { OpenNMSCustomAction, OpenNMSPluginMeta } from '../types';
 
 function updateSettings(pluginId: string, settings: Partial<OpenNMSPluginMeta>): Promise<any> {
   return getBackendSrv().post(`/api/plugins/${pluginId}/settings`, settings);
