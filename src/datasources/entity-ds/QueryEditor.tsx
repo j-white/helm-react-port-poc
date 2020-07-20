@@ -15,6 +15,7 @@ import {
   EntityQueryStatementClause,
   EntityType,
   EntityQueryStatementOrderBy,
+  EntityQueryStatementFilter,
 } from './types';
 
 import { DataSource } from './DataSource';
@@ -1381,15 +1382,11 @@ function createEmptyOrderBy(): EntityQueryStatementOrderBy {
   };
 }
 
-function createDefaultStatement(): EntityQueryStatement {
-  console.log('called');
+function createDefaultFilter(): EntityQueryStatementFilter {
   return {
-    entityType: 'alarm',
-    filter: {
-      clauses: [createEmptyClause(), createEmptyClause()],
-      orderBy: [createEmptyOrderBy()],
-      limit: 0,
-    },
+    clauses: [createEmptyClause(), createEmptyClause()],
+    orderBy: [createEmptyOrderBy()],
+    limit: 0,
   };
 }
 
@@ -1406,11 +1403,14 @@ function excludeById(identifiable: Identifiable): (candidate: Identifiable) => b
 }
 
 export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) => {
-  const { featuredAttributes = defaultEntityQuery.featuredAttributes, statement = createDefaultStatement() } = query;
+  const {
+    featuredAttributes = defaultEntityQuery.featuredAttributes,
+    statement = defaultEntityQuery.statement,
+  } = query;
 
   console.log('query:', JSON.stringify(query, null, 2));
 
-  const { entityType, filter } = statement;
+  const { entityType, filter = createDefaultFilter() } = statement;
   const { clauses, limit, orderBy } = filter;
 
   // notifiers

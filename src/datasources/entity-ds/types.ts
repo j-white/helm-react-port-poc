@@ -4,18 +4,21 @@ import { Defaults } from '../../types';
 
 export interface EntityQuery extends DataQuery {
   featuredAttributes?: boolean;
-  statement?: EntityQueryStatement;
+  statement: EntityQueryStatement;
 }
 
-type EntityQueryDefaults = Defaults<EntityQuery, 'featuredAttributes'>;
+type EntityQueryDefaults = Defaults<EntityQuery, 'featuredAttributes' | 'statement'>;
 
 export const defaultEntityQuery: EntityQueryDefaults = {
   featuredAttributes: true,
+  statement: {
+    entityType: 'alarm',
+  },
 };
 
 export interface EntityQueryStatement {
   entityType: EntityType;
-  filter: EntityQueryStatementFilter;
+  filter?: EntityQueryStatementFilter;
 }
 
 export type EntityType = 'alarm' | 'node';
