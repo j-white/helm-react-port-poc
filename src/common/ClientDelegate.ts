@@ -1,4 +1,4 @@
-import { Client, GrafanaHTTP, OnmsAuthConfig, OnmsServer } from 'opennms-js-ts';
+import { Client, GrafanaHTTP, Comparators, Operators, Filter, OnmsAuthConfig, OnmsServer } from 'opennms-js-ts';
 import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -15,34 +15,34 @@ export class ClientDelegate {
     this.client = undefined;
   }
 
-  //     decorateError(err) {
-  //         let ret = err;
-  //         if (err.err) {
-  //             ret = err.err;
-  //         }
-  //         if (err.data && err.data.err) {
-  //             ret = err.data.err;
-  //         }
-  //         let statusText = 'Request failed.';
+  async decorateError(err: any) {
+    let ret = err;
+    if (err.err) {
+      ret = err.err;
+    }
+    if (err.data && err.data.err) {
+      ret = err.data.err;
+    }
+    let statusText = 'Request failed.';
 
-  //         // cancelled property causes the UI to never complete on failure
-  //         if (err.cancelled) {
-  //             statusText = 'Request timed out.';
-  //             delete err.cancelled;
-  //         }
-  //         if (err.data && err.data.cancelled) {
-  //             statusText = 'Request timed out.';
-  //             delete err.data.cancelled;
-  //         }
+    // cancelled property causes the UI to never complete on failure
+    if (err.cancelled) {
+      statusText = 'Request timed out.';
+      delete err.cancelled;
+    }
+    if (err.data && err.data.cancelled) {
+      statusText = 'Request timed out.';
+      delete err.data.cancelled;
+    }
 
-  //         if (!ret.message) {
-  //             ret.message = ret.statusText || statusText;
-  //         }
-  //         if (!ret.status) {
-  //             ret.status = 'error';
-  //         }
-  //         return Q.reject(ret);
-  //     }
+    if (!ret.message) {
+      ret.message = ret.statusText || statusText;
+    }
+    if (!ret.status) {
+      ret.status = 'error';
+    }
+    return Promise.reject(ret);
+  }
 
   async getClient() {
     if (!this.client) {
@@ -93,348 +93,609 @@ export class ClientDelegate {
     return this.client;
   }
 
-  //     // Inventory (node) related functions
+  // Inventory (node) related functions
 
-  //     getNodeDao() {
-  //         return this.getClient().then(function(client) {
-  //             return client.nodes();
-  //         });
-  //     }
+  async getNodeDao() {
+    this.client = await this.getClient();
+    if (this.client) {
+      return this.client.nodes();
+    }
+    return undefined;
+  }
 
-  //     findNodes(filter) {
-  //         return this.getNodeDao()
-  //             .then(function(nodeDao) {
-  //                 return nodeDao.find(filter);
-  //             }).catch(this.decorateError);
-  //     }
+  async findNodes(filter: Filter | undefined) {
+    try {
+      let nodeDao = await this.getNodeDao();
+      if (nodeDao) {
+        return nodeDao.find(filter);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getNode(nodeId) {
-  //       return this.getNodeDao()
-  //         .then(function(nodeDao) {
-  //             return nodeDao.get(nodeId);
-  //         }).catch(this.decorateError);
-  //     }
+  async getNode(nodeId: number) {
+    try {
+      let nodeDao = await this.getNodeDao();
+      if (nodeDao) {
+        return nodeDao.get(nodeId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getNodeProperties() {
-  //         return this.getNodeDao()
-  //             .then(nodeDao => {
-  //                 return nodeDao.searchProperties();
-  //             }).catch(this.decorateError);
-  //     }
+  async getNodeProperties() {
+    try {
+      let nodeDao = await this.getNodeDao();
+      if (nodeDao) {
+        return nodeDao.searchProperties();
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     findNodeProperty(propertyId) {
-  //         return this.getNodeProperties()
-  //             .then(properties => {
-  //                 return _.find(properties, function(property) {
-  //                     return property.id === propertyId;
-  //                 });
-  //             });
-  //     }
+  async findNodeProperty(propertyId: string | undefined) {
+    let properties = await this.getNodeProperties();
+    return _.find(properties, function(property) {
+      return property.id === propertyId;
+    });
+  }
 
-  //     getNodePropertyComparators(propertyId) {
-  //         return this.findNodeProperty(propertyId)
-  //             .then(property => {
-  //                 if (property) {
-  //                     const comparators = property.type.getComparators();
-  //                     if (comparators && comparators.length > 0) {
-  //                         return comparators;
-  //                     }
-  //                 }
-  //                 console.log("No comparators found for property with id '" + propertyId + "'. Falling back to EQ.");
-  //                 // This may be the case when the user entered a property, which does not exist
-  //                 // therefore fallback to EQ
-  //                 return [ API.Comparators.EQ ];
-  //             }).catch(this.decorateError);
-  //     }
+  async getNodePropertyComparators(propertyId: string | undefined) {
+    try {
+      let property = await this.findNodeProperty(propertyId);
+      if (property && property.type) {
+        const comparators = property.type.getComparators();
+        if (comparators && comparators.length > 0) {
+          return comparators;
+        }
+      }
+      console.log("No comparators found for property with id '" + propertyId + "'. Falling back to EQ.");
+      // This may be the case when the user entered a property, which does not exist
+      // therefore fallback to EQ
+      return [Comparators.EQ];
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     // Fault related functions
+  // Fault related functions
+  async getAlarmDao() {
+    this.client = await this.getClient();
+    if (this.client) {
+      return this.client.alarms();
+    }
+    return undefined;
+  }
 
-  //     getAlarmDao() {
-  //         return this.getClient().then(function(client) {
-  //             return client.alarms();
-  //         });
-  //     }
+  async findAlarms(filter: Filter | undefined) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.find(filter);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     findAlarms(filter) {
-  //         return this.getAlarmDao()
-  //             .then(function(alarmDao) {
-  //                 return alarmDao.find(filter);
-  //             }).catch(this.decorateError);
-  //     }
+  async getAlarm(alarmId: number) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.get(alarmId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getAlarm(alarmId) {
-  //       return this.getAlarmDao()
-  //         .then(function(alarmDao) {
-  //             return alarmDao.get(alarmId);
-  //         }).catch(this.decorateError);
-  //     }
+  async doEscalate(alarmId: number | import('opennms-js-ts').OnmsAlarm) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.escalate(alarmId);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     doEscalate(alarmId, user) {
-  //         return this.getAlarmDao()
-  //             .then(alarmDao => {
-  //                 return alarmDao.escalate(alarmId, user)
-  //             }).catch(this.decorateError);
-  //     }
+  async doClear(alarmId: number | import('opennms-js-ts').OnmsAlarm) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.clear(alarmId);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     doClear(alarmId, user) {
-  //         return this.getAlarmDao()
-  //             .then(alarmDao => {
-  //                 return alarmDao.clear(alarmId, user);
-  //             }).catch(this.decorateError);
-  //     }
+  async doUnack(alarmId: number | import('opennms-js-ts').OnmsAlarm, user: string | undefined) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.unacknowledge(alarmId, user);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     doUnack(alarmId, user) {
-  //         return this.getAlarmDao()
-  //             .then(alarmDao => {
-  //                 return alarmDao.unacknowledge(alarmId, user);
-  //             }).catch(this.decorateError);
-  //     }
+  async doAck(alarmId: number | import('opennms-js-ts').OnmsAlarm, user: string | undefined) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.acknowledge(alarmId, user);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     doAck(alarmId, user) {
-  //         return this.getAlarmDao()
-  //             .then(function(alarmDao) {
-  //                 return alarmDao.acknowledge(alarmId, user);
-  //             }).catch(this.decorateError);
-  //     }
+  async doTicketAction(alarmId: string, action: string) {
+    const supportedActions = ['create', 'update', 'close'];
+    if (supportedActions.indexOf(action) < 0) {
+      throw { message: "Action '" + action + "' not supported." };
+    }
+    try {
+      return this.backendSrv.datasourceRequest({
+        url: this.settings.url + '/api/v2/alarms/' + alarmId + '/ticket/' + action,
+        method: 'POST',
+      });
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     doTicketAction(alarmId, action) {
-  //         const supportedActions = ["create", "update", "close"];
-  //         if (supportedActions.indexOf(action) < 0) {
-  //             throw {message: "Action '" + action + "' not supported."};
-  //         }
-  //         const self = this;
-  //         return this.backendSrv.datasourceRequest({
-  //             url: self.url + '/api/v2/alarms/' + alarmId + "/ticket/" + action,
-  //             method: 'POST',
-  //         }).catch(this.decorateError);
-  //     }
+  async saveSticky(alarmId: number | import('opennms-js-ts').OnmsAlarm, sticky: string, user: string | undefined) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.saveStickyMemo(alarmId, sticky, user);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     saveSticky(alarmId, sticky, user) {
-  //       return this.getAlarmDao()
-  //         .then(function(alarmDao) {
-  //           return alarmDao.saveStickyMemo(alarmId, sticky, user);
-  //         }).catch(this.decorateError);
-  //     }
+  async deleteSticky(alarmId: number | import('opennms-js-ts').OnmsAlarm) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.deleteStickyMemo(alarmId);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     deleteSticky(alarmId) {
-  //       return this.getAlarmDao()
-  //         .then(function(alarmDao) {
-  //           return alarmDao.deleteStickyMemo(alarmId);
-  //         }).catch(this.decorateError);
-  //     }
+  async saveJournal(alarmId: number | import('opennms-js-ts').OnmsAlarm, journal: string, user: string | undefined) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.saveJournalMemo(alarmId, journal, user);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     saveJournal(alarmId, journal, user) {
-  //       return this.getAlarmDao()
-  //         .then(function(alarmDao) {
-  //           return alarmDao.saveJournalMemo(alarmId, journal, user);
-  //         }).catch(this.decorateError);
-  //     }
+  async deleteJournal(alarmId: number | import('opennms-js-ts').OnmsAlarm) {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.deleteJournalMemo(alarmId);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     deleteJournal(alarmId) {
-  //       return this.getAlarmDao()
-  //         .then(function(alarmDao) {
-  //           return alarmDao.deleteJournalMemo(alarmId);
-  //         }).catch(this.decorateError);
-  //     }
+  async findOperators() {
+    const operators = await _.map(Operators, function(operator) {
+      return {
+        id: operator.id,
+        label: operator.label,
+      };
+    });
+    return operators;
+  }
 
-  //     findOperators() {
-  //         const operators = _.map(API.Operators, function(operator) {
-  //             return {
-  //                 id: operator.id,
-  //                 label: operator.label
-  //             }
-  //         });
-  //         return this.$q.when(operators);
-  //     }
+  async getAlarmProperties() {
+    try {
+      let alarmDao = await this.getAlarmDao();
+      if (alarmDao) {
+        return alarmDao.searchProperties();
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getAlarmProperties() {
-  //         return this.getAlarmDao()
-  //             .then(alarmDao => {
-  //                 return alarmDao.searchProperties();
-  //             }).catch(this.decorateError);
-  //     }
+  async findAlarmProperty(propertyId: any) {
+    let properties = await this.getAlarmProperties();
+    return await _.find(properties, function(property) {
+      return property.id === propertyId;
+    });
+  }
 
-  //     findAlarmProperty(propertyId) {
-  //         return this.getAlarmProperties()
-  //             .then(properties => {
-  //                 return _.find(properties, function(property) {
-  //                     return property.id === propertyId;
-  //                 });
-  //             });
-  //     }
+  async getAlarmPropertyComparators(propertyId: string) {
+    try {
+      let property = await this.findAlarmProperty(propertyId);
+      if (property && property.type) {
+        const comparators = property.type.getComparators();
+        if (comparators && comparators.length > 0) {
+          return comparators;
+        }
+      }
+      console.log("No comparators found for property with id '" + propertyId + "'. Falling back to EQ.");
+      // This may be the case when the user entered a property, which does not exist
+      // therefore fallback to EQ
+      return [Comparators.EQ];
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getAlarmPropertyComparators(propertyId) {
-  //         return this.findAlarmProperty(propertyId)
-  //             .then(property => {
-  //                 if (property) {
-  //                     const comparators = property.type.getComparators();
-  //                     if (comparators && comparators.length > 0) {
-  //                         return comparators;
-  //                     }
-  //                 }
-  //                 console.log("No comparators found for property with id '" + propertyId + "'. Falling back to EQ.");
-  //                 // This may be the case when the user entered a property, which does not exist
-  //                 // therefore fallback to EQ
-  //                 return [ API.Comparators.EQ ];
-  //             }).catch(this.decorateError);
-  //     }
+  // Situation Feedback functions
 
-  //     // Situation Feedback functions
+  async getSituationfeedbackDao() {
+    try {
+      this.client = await this.getClient();
+      if (this.client) {
+        return this.client.situationfeedback();
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSituationfeedbackDao() {
-  //         return this.getClient().then(function (c) {
-  //             return c.situationfeedback();
-  //         }).catch(this.decorateError);
-  //     }
+  async getSituationfeedback(situationId: any) {
+    try {
+      let feedbackDao = await this.getSituationfeedbackDao();
+      if (feedbackDao) {
+        return feedbackDao.getFeedback(situationId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSituationfeedback(situationId) {
-  //         return this.getSituationfeedbackDao()
-  //         .then(function(feedbackDao) {
-  //             return feedbackDao.getFeedback(situationId);
-  //         }).catch(this.decorateError);
-  //     }
+  async submitSituationFeedback(situationId: any, feedback: any) {
+    try {
+      let feedbackDao = await this.getSituationfeedbackDao();
+      if (feedbackDao) {
+        return feedbackDao.saveFeedback(feedback, situationId);
+      }
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     submitSituationFeedback(situationId, feedback) {
-  //         return this.getSituationfeedbackDao()
-  //         .then(function(feedbackDao) {
-  //           return feedbackDao.saveFeedback(feedback, situationId);
-  //         }).catch(this.decorateError);
-  //     }
+  // Flow related functions
 
-  //     // Flow related functions
+  async getFlowDao() {
+    try {
+      this.client = await this.getClient();
+      if (this.client) {
+        return this.client.flows();
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getFlowDao() {
-  //         return this.getClient().then(function(c) {
-  //             return c.flows();
-  //         }).catch(this.decorateError);
-  //     }
+  async getApplications(prefix: any, start: any, end: any, nodeCriteria: any, interfaceId: any) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getApplications(prefix, start, end, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getApplications(prefix, start, end, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getApplications(prefix, start, end, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSeriesForTopNApplications(
+    N: any,
+    start: any,
+    end: any,
+    step: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSeriesForTopNApplications(N, start, end, step, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSeriesForTopNApplications(N, start, end, step, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSeriesForTopNApplications(N, start, end, step, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSeriesForApplications(
+    applications: any,
+    start: any,
+    end: any,
+    step: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSeriesForApplications(
+          applications,
+          start,
+          end,
+          step,
+          includeOther,
+          nodeCriteria,
+          interfaceId
+        );
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSeriesForApplications(applications, start, end, step, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSeriesForApplications(applications, start, end, step, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSummaryForTopNApplications(
+    N: any,
+    start: any,
+    end: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSummaryForTopNApplications(N, start, end, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSummaryForTopNApplications(N, start, end, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSummaryForTopNApplications(N, start, end, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSummaryForApplications(
+    applications: any,
+    start: any,
+    end: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSummaryForApplications(applications, start, end, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSummaryForApplications(applications, start, end, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSummaryForApplications(applications, start, end, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSeriesForTopNConversations(
+    N: any,
+    start: number,
+    end: number,
+    step: number,
+    includeOther: any,
+    nodeCriteria: string,
+    interfaceId: number
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSeriesForTopNConversations({
+          N: N,
+          start: start,
+          end: end,
+          step: step,
+          exporterNodeCriteria: nodeCriteria,
+          ifIndex: interfaceId,
+          includeOther: includeOther,
+        });
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSeriesForTopNConversations(N, start, end, step, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSeriesForTopNConversations({
-  //                     N: N,
-  //                     start: start,
-  //                     end: end,
-  //                     step: step,
-  //                     exporterNode: nodeCriteria,
-  //                     ifIndex: interfaceId,
-  //                     includeOther: includeOther
-  //                 });
-  //             }).catch(this.decorateError);
-  //     }
+  async getSeriesForConversations(
+    conversations: any,
+    start: any,
+    end: any,
+    step: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSeriesForConversations(
+          conversations,
+          start,
+          end,
+          step,
+          includeOther,
+          nodeCriteria,
+          interfaceId
+        );
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSeriesForConversations(conversations, start, end, step, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSeriesForConversations(conversations, start, end, step, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSummaryForTopNConversations(
+    N: any,
+    start: number,
+    end: number,
+    includeOther: any,
+    nodeCriteria: string,
+    interfaceId: number
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSummaryForTopNConversations({
+          N: N,
+          start: start,
+          end: end,
+          exporterNodeCriteria: nodeCriteria,
+          ifIndex: interfaceId,
+          includeOther: includeOther,
+        });
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSummaryForTopNConversations(N, start, end, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSummaryForTopNConversations({
-  //                     N: N,
-  //                     start: start,
-  //                     end: end,
-  //                     exporterNode: nodeCriteria,
-  //                     ifIndex: interfaceId,
-  //                     includeOther: includeOther
-  //                 });
-  //             }).catch(this.decorateError);
-  //     }
+  async getSummaryForConversations(
+    conversations: any,
+    start: any,
+    end: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSummaryForConversations(conversations, start, end, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSummaryForConversations(conversations, start, end, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSummaryForConversations(conversations, start, end, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getHosts(prefix: string, start: any, end: any, nodeCriteria: any, interfaceId: any) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getHosts(prefix + '.*', start, end, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getHosts(prefix, start, end, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getHosts(prefix + '.*', start, end, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSeriesForHosts(
+    hosts: any,
+    start: any,
+    end: any,
+    step: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSeriesForHosts(hosts, start, end, step, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSeriesForHosts(hosts, start, end, step, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSeriesForHosts(hosts, start, end, step, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSeriesForTopNHosts(
+    N: any,
+    start: any,
+    end: any,
+    step: any,
+    includeOther: any,
+    nodeCriteria: any,
+    interfaceId: any
+  ) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSeriesForTopNHosts(N, start, end, step, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSeriesForTopNHosts(N, start, end, step, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSeriesForTopNHosts(N, start, end, step, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSummaryForTopNHosts(N: any, start: any, end: any, includeOther: any, nodeCriteria: any, interfaceId: any) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSummaryForTopNHosts(N, start, end, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSummaryForTopNHosts(N, start, end, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSummaryForTopNHosts(N, start, end, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getSummaryForHosts(hosts: any, start: any, end: any, includeOther: any, nodeCriteria: any, interfaceId: any) {
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getSummaryForHosts(hosts, start, end, includeOther, nodeCriteria, interfaceId);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getSummaryForHosts(hosts, start, end, includeOther, nodeCriteria, interfaceId) {
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getSummaryForHosts(hosts, start, end, includeOther, nodeCriteria, interfaceId);
-  //             }).catch(this.decorateError);
-  //     }
+  async getExporters() {
+    let searchLimit = this.searchLimit;
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getExporters(searchLimit);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 
-  //     getExporters() {
-  //         let searchLimit = this.searchLimit;
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getExporters(searchLimit);
-  //             }).catch(this.decorateError);
-  //     }
-
-  //     getExporter(nodeCriteria) {
-  //         let searchLimit = this.searchLimit;
-  //         return this.getFlowDao()
-  //             .then(function(flowDao) {
-  //                 return flowDao.getExporter(nodeCriteria, searchLimit);
-  //             }).catch(this.decorateError);
-  //     }
+  async getExporter(nodeCriteria: any) {
+    let searchLimit = this.searchLimit;
+    try {
+      let flowDao = await this.getFlowDao();
+      if (flowDao) {
+        return flowDao.getExporter(nodeCriteria, searchLimit);
+      }
+      return undefined;
+    } catch (err) {
+      return this.decorateError(err);
+    }
+  }
 }
