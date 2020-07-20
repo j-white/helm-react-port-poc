@@ -20,8 +20,9 @@ import {
 import { DataSource } from './DataSource';
 
 import { ClauseEditor } from './query/editor/ClauseEditor';
+import { FieldInputRows } from '../../common/components/FieldInputRows';
+import { FieldInputWithActions } from '../../common/components/FieldInputWithActions';
 import { OrderByEditor } from './query/editor/OrderByEditor';
-import { FieldInputWithActions } from 'common/FieldInputWithActions';
 
 const { Switch } = LegacyForms;
 
@@ -1385,7 +1386,7 @@ function createDefaultStatement(): EntityQueryStatement {
   return {
     entityType: 'alarm',
     filter: {
-      clauses: [createEmptyClause()],
+      clauses: [createEmptyClause(), createEmptyClause()],
       orderBy: [createEmptyOrderBy()],
       limit: 0,
     },
@@ -1396,8 +1397,12 @@ interface Identifiable {
   id: string;
 }
 
-function matchById(identifable: Identifiable): (candidate: Identifiable) => boolean {
-  return candidate => candidate.id === identifable.id;
+function matchById(identifiable: Identifiable): (candidate: Identifiable) => boolean {
+  return candidate => candidate.id === identifiable.id;
+}
+
+function excludeById(identifiable: Identifiable): (candidate: Identifiable) => boolean {
+  return candidate => candidate.id !== identifiable.id;
 }
 
 export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) => {
@@ -1408,8 +1413,46 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
   const { entityType, filter } = statement;
   const { clauses, limit, orderBy } = filter;
 
-  const handleEntityTypeChange = (entityType: EntityType) => {
+  // notifiers
+
+  const notifyEntityTypeChange = (entityType: EntityType) => {
     onChange({ ...query, statement: { ...statement, entityType } });
+  };
+
+  const notifyOrderByChange = (orderBy: EntityQueryStatementOrderBy[]) => {
+    onChange({
+      ...query,
+      statement: {
+        ...statement,
+        filter: {
+          ...filter,
+          orderBy,
+        },
+      },
+    });
+  };
+
+  const notifyFilterClausesChange = (clauses: EntityQueryStatementClause[]) => {
+    onChange({
+      ...query,
+      statement: {
+        ...statement,
+        filter: {
+          ...filter,
+          clauses,
+        },
+      },
+    });
+  };
+
+  const notifyLimitChange = (limit: number) => {
+    onChange({ ...query, statement: { ...statement, filter: { ...filter, limit } } });
+  };
+
+  // user gesture handlers
+
+  const handleEntityTypeChange = (entityType: EntityType) => {
+    notifyEntityTypeChange(entityType);
     onRunQuery();
   };
 
@@ -1418,43 +1461,46 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
     if (index < 0) {
       throw new Error('Clause not found.');
     }
-    onChange({
-      ...query,
-      statement: {
-        ...statement,
-        filter: {
-          ...filter,
-          clauses: Object.assign([...clauses], {
-            [index]: clause,
-          }),
-        },
-      },
+    const updatedClauses = Object.assign([...clauses], {
+      [index]: clause,
     });
-  };
 
-  // TODO: debounce 250ms? (or is this handled in the DataSourceAPI?)
-  const handleLimitChange = (limit: number) => {
-    onChange({ ...query, statement: { ...statement, filter: { ...filter, limit } } });
+    notifyFilterClausesChange(updatedClauses);
     onRunQuery();
   };
 
-  const handleOrderByChange = (o: EntityQueryStatementOrderBy) => {
-    const index = orderBy.findIndex(matchById(o));
+  const handleLimitChange = (limit: number) => {
+    notifyLimitChange(limit);
+    onRunQuery();
+  };
+
+  const handleOrderByChange = (proposedOrderBy: EntityQueryStatementOrderBy) => {
+    const index = orderBy.findIndex(matchById(proposedOrderBy));
     if (index < 0) {
       throw new Error('Clause not found.');
     }
-    onChange({
-      ...query,
-      statement: {
-        ...statement,
-        filter: {
-          ...filter,
-          orderBy: Object.assign([...orderBy], {
-            [index]: o,
-          }),
-        },
-      },
+    const updatedOrderBy = Object.assign([...orderBy], {
+      [index]: proposedOrderBy,
     });
+
+    notifyOrderByChange(updatedOrderBy);
+    onRunQuery();
+  };
+
+  const handleOrderByAdd = (afterOrderBy: EntityQueryStatementOrderBy) => {
+    const index = orderBy.findIndex(matchById(afterOrderBy)) + 1;
+    const updatedOrderBy = [...orderBy.slice(0, index), createEmptyOrderBy(), ...orderBy.slice(index)];
+
+    notifyOrderByChange(updatedOrderBy);
+    //onRunQuery();
+  };
+
+  const handleOrderByRemove = (orderByToRemove: EntityQueryStatementOrderBy) => {
+    const filteredOrderBy = orderBy.filter(excludeById(orderByToRemove));
+    const updatedOrderBy = filteredOrderBy.length > 0 ? filteredOrderBy : [createEmptyOrderBy()];
+
+    notifyOrderByChange(updatedOrderBy);
+    onRunQuery();
   };
 
   const handleFeaturedAttributesChange = (featuredAttributes: boolean) => {
@@ -1491,27 +1537,34 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
           <InlineFormLabel className="query-keyword" tooltip={orderByTooltop} width={8}>
             ORDER BY
           </InlineFormLabel>
-          <FieldInputWithActions
-            actions={
-              <>
-                <Button variant="secondary" size="xs" title="Add attribute" onClick={() => {}}>
-                  <Icon name="plus" />
-                </Button>
-                <Button variant="secondary" size="xs" onClick={() => {}}>
-                  <Icon name="trash-alt" title="Remove attribute" />
-                </Button>
-              </>
-            }
-          >
-            {orderBy.map((orderBy, index) => (
-              <OrderByEditor
-                key={orderBy.id}
-                attributeOptions={attributeOptions}
-                orderBy={orderBy}
-                onChange={handleOrderByChange}
-              />
+          <FieldInputRows>
+            {orderBy.map(orderBy => (
+              <FieldInputWithActions
+                actions={
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="xs"
+                      title="Add attribute"
+                      onClick={() => handleOrderByAdd(orderBy)}
+                    >
+                      <Icon name="plus" />
+                    </Button>
+                    <Button variant="secondary" size="xs" onClick={() => handleOrderByRemove(orderBy)}>
+                      <Icon name="trash-alt" title="Remove attribute" />
+                    </Button>
+                  </>
+                }
+              >
+                <OrderByEditor
+                  key={orderBy.id}
+                  attributeOptions={attributeOptions}
+                  orderBy={orderBy}
+                  onChange={handleOrderByChange}
+                />
+              </FieldInputWithActions>
             ))}
-          </FieldInputWithActions>
+          </FieldInputRows>
         </div>
         <div className="gf-form">
           <InlineFormLabel className="query-keyword" tooltip={limitTooltip} width={8}>

@@ -8,11 +8,11 @@ import {
   EntityQueryStatementNestedRestriction,
   EntityQueryStatementOperator,
   EntityQueryStatementRestriction,
-} from 'datasources/entity-ds/types';
+} from '../../../../datasources/entity-ds/types';
 
 import { ClauseOperatorEditor } from './ClauseOperatorEditor';
+import { FieldInputWithActions } from '../../../../common/components/FieldInputWithActions';
 import { RestrictionEditor } from './RestrictionEditor';
-import { FieldInputWithActions } from 'common/FieldInputWithActions';
 
 type Props = {
   attributeOptions: EntityAttributeOption[];

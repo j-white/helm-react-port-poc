@@ -47,14 +47,15 @@ function getOrderBysDisplayText(orderBys: OrderBy[]): string {
 }
 
 export function getQueryStatementDisplayText(statement: QueryStatement): string {
-  const { entityType, filter, orderBy } = statement;
+  const { entityType, filter } = statement;
+
   let queryText = `select all ${entityType}s`;
   if (filter.clauses.length > 0) {
     const clausesDisplayText = getClausesDisplayText(filter.clauses);
     queryText += ` where ${clausesDisplayText}`;
   }
-  if (orderBy.length > 0) {
-    const orderByDisplayText = getOrderBysDisplayText(orderBy);
+  if (filter.orderBy.length > 0) {
+    const orderByDisplayText = getOrderBysDisplayText(filter.orderBy);
     queryText += ` order by ${orderByDisplayText}`;
   }
   if (filter.limit > 0) {

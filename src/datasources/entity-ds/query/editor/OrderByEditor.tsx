@@ -4,7 +4,7 @@ import {
   EntityAttributeOption,
   EntityQueryStatementOrder,
   EntityQueryStatementOrderBy,
-} from 'datasources/entity-ds/types';
+} from '../../../../datasources/entity-ds/types';
 
 import { OrderByOrderEditor } from './OrderByOrderEditor';
 import { OrderByAttributeEditor } from './OrderByAttributeEditor';

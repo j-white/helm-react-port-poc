@@ -4,7 +4,7 @@ import {
   EntityAttributeOption,
   EntityQueryStatementComparator,
   EntityQueryStatementRestriction,
-} from 'datasources/entity-ds/types';
+} from '../../../../datasources/entity-ds/types';
 
 import { RestrictionAttributeEditor } from './RestrictionAttributeEditor';
 import { RestrictionComparatorEditor } from './RestrictionComparatorEditor';
