@@ -38,6 +38,16 @@ export function createEmptyClause(): EntityQueryStatementClause {
   };
 }
 
+export function createEmptyNestedClause(): EntityQueryStatementClause {
+  return {
+    id: uuidv4(),
+    restriction: {
+      clauses: [createEmptyClause()],
+    },
+    operator: { label: 'AND' },
+  };
+}
+
 export function createEmptyOrderBy(): EntityQueryStatementOrderBy {
   return {
     id: uuidv4(),

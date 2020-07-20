@@ -2,7 +2,7 @@ import React from 'react';
 
 import { matchById, excludeById } from '../../../../common/Identifiable';
 
-import { createEmptyClause } from '../../defaults';
+import { createEmptyClause, createEmptyNestedClause } from '../../defaults';
 import { EntityAttributeOption, EntityQueryStatementClause } from '../../types';
 
 import { ClauseEditor } from './ClauseEditor';
@@ -33,6 +33,13 @@ export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, onCh
     onChange(updatedClauses);
   };
 
+  const handleClauseAddNestedAfter = (afterClause: EntityQueryStatementClause) => {
+    const index = clauses.findIndex(matchById(afterClause)) + 1;
+    const updatedClauses = [...clauses.slice(0, index), createEmptyNestedClause(), ...clauses.slice(index)];
+
+    onChange(updatedClauses);
+  };
+
   const handleClauseRemove = (clauseToRemove: EntityQueryStatementClause) => {
     const filteredClauses = clauses.filter(excludeById(clauseToRemove));
     const updatedClauses = filteredClauses.length > 0 ? filteredClauses : [createEmptyClause()];
@@ -49,6 +56,7 @@ export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, onCh
           index={index}
           attributeOptions={attributeOptions}
           onAddAfter={handleClauseAdd}
+          onAddNestedAfter={handleClauseAddNestedAfter}
           onChange={handleClauseChange}
           onRemove={handleClauseRemove}
         />

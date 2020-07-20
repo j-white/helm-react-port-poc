@@ -13,6 +13,7 @@ import {
 import { ClausesEditor } from './ClausesEditor';
 import { ClauseOperatorEditor } from './ClauseOperatorEditor';
 import { FieldInputWithActions } from '../../../../common/components/FieldInputWithActions';
+import { FieldInputRows } from '../../../../common/components/FieldInputRows';
 import { RestrictionEditor } from './RestrictionEditor';
 
 type Props = {
@@ -20,11 +21,20 @@ type Props = {
   clause: EntityQueryStatementClause;
   index: number;
   onAddAfter: (clause: EntityQueryStatementClause) => void;
+  onAddNestedAfter: (clause: EntityQueryStatementClause) => void;
   onChange: (clause: EntityQueryStatementClause) => void;
   onRemove: (clause: EntityQueryStatementClause) => void;
 };
 
-export const ClauseEditor: React.FC<Props> = ({ attributeOptions, clause, index, onAddAfter, onChange, onRemove }) => {
+export const ClauseEditor: React.FC<Props> = ({
+  attributeOptions,
+  clause,
+  index,
+  onAddAfter,
+  onAddNestedAfter,
+  onChange,
+  onRemove,
+}) => {
   const handleOperatorChange = (operator: EntityQueryStatementOperator) => {
     onChange({
       ...clause,
@@ -43,12 +53,21 @@ export const ClauseEditor: React.FC<Props> = ({ attributeOptions, clause, index,
     onAddAfter(clause);
   };
 
+  const handleAddNestedAfterClick = () => {
+    onAddNestedAfter(clause);
+  };
+
   const handleRemoveClick = () => {
     onRemove(clause);
   };
 
   const handleClausesChange = (clauses: EntityQueryStatementClause[]) => {
-    // TODO: implement onChange()
+    onChange({
+      ...clause,
+      restriction: {
+        clauses,
+      },
+    });
   };
 
   const isNestedRestriction = 'clauses' in clause.restriction;
@@ -71,7 +90,7 @@ export const ClauseEditor: React.FC<Props> = ({ attributeOptions, clause, index,
               <Button variant="secondary" size="xs" title="Add restriction" onClick={handleAddAfterClick}>
                 <Icon name="plus" />
               </Button>
-              <Button variant="secondary" size="xs" onClick={() => {}}>
+              <Button variant="secondary" size="xs" onClick={handleAddNestedAfterClick}>
                 <Icon name="folder-plus" title="Add nested restriction" />
               </Button>
               <Button variant="secondary" size="xs" onClick={handleRemoveClick}>
@@ -88,12 +107,14 @@ export const ClauseEditor: React.FC<Props> = ({ attributeOptions, clause, index,
         </FieldInputWithActions>
       )}
       {nestedRestriction && (
-        <ClausesEditor
-          key={clause.id}
-          clauses={nestedRestriction.clauses}
-          attributeOptions={attributeOptions}
-          onChange={handleClausesChange}
-        />
+        <FieldInputRows>
+          <ClausesEditor
+            key={clause.id}
+            clauses={nestedRestriction.clauses}
+            attributeOptions={attributeOptions}
+            onChange={handleClausesChange}
+          />
+        </FieldInputRows>
       )}
     </div>
   );
