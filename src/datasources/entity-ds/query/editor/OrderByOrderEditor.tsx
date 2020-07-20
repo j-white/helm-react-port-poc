@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Select } from '@grafana/ui';
+
 import { EntityQueryStatementOrder, EntityQueryStatementOrderType } from '../../types';
 
 interface OrderOptions {
