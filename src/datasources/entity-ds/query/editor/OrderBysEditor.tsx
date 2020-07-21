@@ -2,7 +2,6 @@ import React from 'react';
 
 import { InlineFormLabel } from '@grafana/ui';
 
-
 import { excludeById, matchById } from 'common/Identifiable';
 import { EditorHBox } from 'common/components/EditorHBox';
 import { EditorRow } from 'common/components/EditorRow';
@@ -69,11 +68,21 @@ export const OrderBysEditor: React.FC<Props> = ({ attributeOptions, orderBys, on
         <EditorRow
           actions={
             <EditorHBox>
-              <EditorRowActionButton name="plus" title="Add attribute" onClick={() => handleOrderByAdd(orderBy)} />
               <EditorRowActionButton
-                name="trash-alt"
-                title="Remove attribute"
-                onClick={() => handleOrderByRemove(orderBy)}
+                name="plus"
+                title="Add attribute"
+                onClick={e => {
+                  e.currentTarget.blur();
+                  handleOrderByAdd(orderBy);
+                }}
+              />
+              <EditorRowActionButton
+                name={orderBys.length > 1 ? 'trash-alt' : 'times'}
+                title={orderBys.length > 1 ? 'Remove attribute' : 'Clear attribute'}
+                onClick={e => {
+                  e.currentTarget.blur();
+                  handleOrderByRemove(orderBy);
+                }}
               />
             </EditorHBox>
           }

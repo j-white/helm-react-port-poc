@@ -54,10 +54,11 @@ export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, dept
       {clauses.map((clause, index) => (
         <ClauseEditor
           key={clause.id}
+          attributeOptions={attributeOptions}
           clause={clause}
           depth={depth + 1}
           index={index}
-          attributeOptions={attributeOptions}
+          siblingCount={clauses.length}
           onAddAfter={handleClauseAdd}
           onAddNestedAfter={handleClauseAddNestedAfter}
           onChange={handleClauseChange}

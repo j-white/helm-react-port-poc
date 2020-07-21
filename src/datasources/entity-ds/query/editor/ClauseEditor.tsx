@@ -81,6 +81,7 @@ type Props = {
   clause: EntityQueryStatementClause;
   depth: number;
   index: number;
+  siblingCount: number;
   onAddAfter: (clause: EntityQueryStatementClause) => void;
   onAddNestedAfter: (clause: EntityQueryStatementClause) => void;
   onChange: (clause: EntityQueryStatementClause) => void;
@@ -92,6 +93,7 @@ export const ClauseEditor: React.FC<Props> = ({
   clause,
   depth,
   index,
+  siblingCount,
   onAddAfter,
   onAddNestedAfter,
   onChange,
@@ -166,8 +168,8 @@ export const ClauseEditor: React.FC<Props> = ({
                 onMouseLeave={() => setShowAddHighlight(false)}
               />
               <EditorRowActionButton
-                name="trash-alt"
-                title="Remove restriction"
+                name={siblingCount > 1 ? 'trash-alt' : 'times'}
+                title={siblingCount > 1 ? 'Remove restriction' : 'Clear restriction'}
                 onClick={e => {
                   handleRemoveClick();
                   e.currentTarget.blur();
