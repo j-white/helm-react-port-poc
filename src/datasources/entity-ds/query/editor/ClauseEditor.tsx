@@ -1,9 +1,8 @@
-import React from 'react';
-import { css } from 'emotion';
+import React, { useState } from 'react';
+import { css, cx } from 'emotion';
 
 import { InlineFormLabel } from '@grafana/ui';
 
-import { EditorHBox } from 'common/components/EditorHBox';
 import { EditorRow } from 'common/components/EditorRow';
 import { EditorRowActionButton } from 'common/components/EditorRowActionButton';
 
@@ -15,15 +14,66 @@ import {
   EntityQueryStatementRestriction,
 } from 'datasources/entity-ds/types';
 
-
 import { ClauseOperatorEditor } from './ClauseOperatorEditor';
 import { ClausesEditor } from './ClausesEditor';
+import { EditorHBox } from 'common/components/EditorHBox';
 import { RestrictionEditor } from './RestrictionEditor';
 
+const withAddHighlight = css`
+  position: relative;
+
+  &::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 3px;
+    bottom: 1px;
+    left: 0;
+    border-bottom: 2px solid rgba(51, 162, 229, 0.8);
+    pointer-events: none;
+    z-index: 1;
+  }
+`;
+
+const withRemoveHighlight = css`
+  position: relative;
+
+  &::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 3px;
+    bottom: 1px;
+    left: 0;
+    border: 2px solid rgba(51, 162, 229, 0.8);
+    pointer-events: none;
+    z-index: 1;
+  }
+`;
+
 const withIndentedBorder = css`
-  border-left: 2px solid rgb(51, 162, 229, 0.8);
   margin-left: 8px;
   padding-left: 8px;
+
+  position: relative;
+
+  &::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 7px;
+    left: 0;
+    width: 8px;
+    border: 2px solid rgba(51, 162, 229, 0.8);
+    border-right: none;
+    border-top: none;
+    pointer-events: none;
+    z-index: 1;
+  }
 `;
 
 type Props = {
@@ -47,6 +97,9 @@ export const ClauseEditor: React.FC<Props> = ({
   onChange,
   onRemove,
 }) => {
+  const [showAddHighlight, setShowAddHighlight] = useState(false);
+  const [showRemoveHighlight, setShowRemoveHighlight] = useState(false);
+
   const handleOperatorChange = (operator: EntityQueryStatementOperator) => {
     onChange({
       ...clause,
@@ -87,18 +140,41 @@ export const ClauseEditor: React.FC<Props> = ({
   const nestedRestriction = isNestedRestriction ? (clause.restriction as EntityQueryStatementNestedRestriction) : null;
 
   return (
-    <>
+    <div className={cx(showAddHighlight && withAddHighlight, showRemoveHighlight && withRemoveHighlight)}>
       <div>
         <EditorRow
           actions={
             <EditorHBox>
-              <EditorRowActionButton name="plus" title="Add restriction" onClick={handleAddAfterClick} />
+              <EditorRowActionButton
+                name="plus"
+                title="Add restriction"
+                onClick={e => {
+                  handleAddAfterClick();
+                  e.currentTarget.blur();
+                }}
+                onMouseEnter={() => setShowAddHighlight(true)}
+                onMouseLeave={() => setShowAddHighlight(false)}
+              />
               <EditorRowActionButton
                 name="folder-plus"
                 title="Add nested restriction"
-                onClick={handleAddNestedAfterClick}
+                onClick={e => {
+                  handleAddNestedAfterClick();
+                  e.currentTarget.blur();
+                }}
+                onMouseEnter={() => setShowAddHighlight(true)}
+                onMouseLeave={() => setShowAddHighlight(false)}
               />
-              <EditorRowActionButton name="trash-alt" title="Remove restriction" onClick={handleRemoveClick} />
+              <EditorRowActionButton
+                name="trash-alt"
+                title="Remove restriction"
+                onClick={e => {
+                  handleRemoveClick();
+                  e.currentTarget.blur();
+                }}
+                onMouseEnter={() => setShowRemoveHighlight(true)}
+                onMouseLeave={() => setShowRemoveHighlight(false)}
+              />
             </EditorHBox>
           }
           label={
@@ -133,6 +209,6 @@ export const ClauseEditor: React.FC<Props> = ({
           />
         </div>
       )}
-    </>
+    </div>
   );
 };

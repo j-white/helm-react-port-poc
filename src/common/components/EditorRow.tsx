@@ -2,9 +2,9 @@ import React from 'react';
 import { css } from 'emotion';
 
 const withRow = css`
-  display: flex;
-  align-items: flex-start
   align-content: flex-start;
+  align-items: flex-start;
+  display: flex;
   flex-wrap: wrap;
 `;
 
