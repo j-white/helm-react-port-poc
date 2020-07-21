@@ -1,19 +1,21 @@
 import React from 'react';
 
-import { matchById, excludeById } from '../../../../common/Identifiable';
+import { matchById, excludeById } from 'common/Identifiable';
 
-import { createEmptyClause, createEmptyNestedClause } from '../../defaults';
-import { EntityAttributeOption, EntityQueryStatementClause } from '../../types';
+import { createEmptyClause, createEmptyNestedClause } from 'datasources/entity-ds/defaults';
+
+import { EntityAttributeOption, EntityQueryStatementClause } from 'datasources/entity-ds/types';
 
 import { ClauseEditor } from './ClauseEditor';
 
 type Props = {
   attributeOptions: EntityAttributeOption[];
   clauses: EntityQueryStatementClause[];
+  depth: number;
   onChange: (clauses: EntityQueryStatementClause[]) => void;
 };
 
-export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, onChange }) => {
+export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, depth, onChange }) => {
   const handleClauseChange = (clause: EntityQueryStatementClause) => {
     const index = clauses.findIndex(matchById(clause));
     if (index < 0) {
@@ -53,6 +55,7 @@ export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, onCh
         <ClauseEditor
           key={clause.id}
           clause={clause}
+          depth={depth + 1}
           index={index}
           attributeOptions={attributeOptions}
           onAddAfter={handleClauseAdd}

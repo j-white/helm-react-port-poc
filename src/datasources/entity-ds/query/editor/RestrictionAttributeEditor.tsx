@@ -3,7 +3,7 @@ import { css } from 'emotion';
 
 import { Select } from '@grafana/ui';
 
-import { EntityAttributeOption } from '../../types';
+import { EntityAttributeOption } from 'datasources/entity-ds/types';
 
 const withMinWidth = css`
   min-width: 144px;

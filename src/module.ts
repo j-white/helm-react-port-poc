@@ -2,8 +2,9 @@ import { AppPlugin } from '@grafana/data';
 
 import { OpenNMSAppConfig } from './types';
 
-import { ConfigTab } from './config/ConfigTab';
 import { RootPage } from './RootPage';
+
+import { ConfigTab } from './config/ConfigTab';
 
 export const plugin = new AppPlugin<OpenNMSAppConfig>().setRootPage(RootPage).addConfigPage({
   body: ConfigTab,

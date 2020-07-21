@@ -1,6 +1,10 @@
 import React from 'react';
 
-import { EntityAttributeOption, EntityQueryStatementOrder, EntityQueryStatementOrderBy } from '../../types';
+import {
+  EntityAttributeOption,
+  EntityQueryStatementOrder,
+  EntityQueryStatementOrderBy,
+} from 'datasources/entity-ds/types';
 
 import { OrderByOrderEditor } from './OrderByOrderEditor';
 import { OrderByAttributeEditor } from './OrderByAttributeEditor';

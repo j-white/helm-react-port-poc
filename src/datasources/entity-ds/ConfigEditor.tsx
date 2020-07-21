@@ -3,10 +3,10 @@ import React from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { DataSourceHttpSettings, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 
+import { MiscHttpSettings } from 'common/components/MiscHttpSettings';
+
 import { defaultEntityDataSourceOptions } from './defaults';
 import { EntityDataSourceOptions } from './types';
-
-import { MiscHttpSettings } from '../../common/components/MiscHttpSettings';
 
 const { Switch } = LegacyForms;
 

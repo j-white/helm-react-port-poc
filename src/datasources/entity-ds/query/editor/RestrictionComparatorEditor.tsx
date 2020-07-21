@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Select } from '@grafana/ui';
 
-import { EntityQueryStatementComparator, EntityQueryStatementComparatorType } from '../../types';
+import { EntityQueryStatementComparator, EntityQueryStatementComparatorType } from 'datasources/entity-ds/types';
 
 interface ComparatorOption {
   label: string;

@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 
 import { Icon, InlineFormLabel, Select } from '@grafana/ui';
 
-import { EntityQueryStatementOperator, EntityQueryStatementOperatorType } from '../../types';
+import { EntityQueryStatementOperator, EntityQueryStatementOperatorType } from 'datasources/entity-ds/types';
 
 interface OperatorOption {
   label: string;

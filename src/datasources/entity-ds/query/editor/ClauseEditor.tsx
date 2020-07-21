@@ -1,6 +1,11 @@
 import React from 'react';
+import { css } from 'emotion';
 
-import { Button, Icon, InlineFormLabel } from '@grafana/ui';
+import { InlineFormLabel } from '@grafana/ui';
+
+import { EditorHBox } from 'common/components/EditorHBox';
+import { EditorRow } from 'common/components/EditorRow';
+import { EditorRowActionButton } from 'common/components/EditorRowActionButton';
 
 import {
   EntityAttributeOption,
@@ -8,17 +13,23 @@ import {
   EntityQueryStatementNestedRestriction,
   EntityQueryStatementOperator,
   EntityQueryStatementRestriction,
-} from '../../types';
+} from 'datasources/entity-ds/types';
 
-import { ClausesEditor } from './ClausesEditor';
+
 import { ClauseOperatorEditor } from './ClauseOperatorEditor';
-import { FieldInputWithActions } from '../../../../common/components/FieldInputWithActions';
-import { FieldInputRows } from '../../../../common/components/FieldInputRows';
+import { ClausesEditor } from './ClausesEditor';
 import { RestrictionEditor } from './RestrictionEditor';
+
+const withIndentedBorder = css`
+  border-left: 2px solid rgb(51, 162, 229, 0.8);
+  margin-left: 8px;
+  padding-left: 8px;
+`;
 
 type Props = {
   attributeOptions: EntityAttributeOption[];
   clause: EntityQueryStatementClause;
+  depth: number;
   index: number;
   onAddAfter: (clause: EntityQueryStatementClause) => void;
   onAddNestedAfter: (clause: EntityQueryStatementClause) => void;
@@ -29,6 +40,7 @@ type Props = {
 export const ClauseEditor: React.FC<Props> = ({
   attributeOptions,
   clause,
+  depth,
   index,
   onAddAfter,
   onAddNestedAfter,
@@ -75,47 +87,52 @@ export const ClauseEditor: React.FC<Props> = ({
   const nestedRestriction = isNestedRestriction ? (clause.restriction as EntityQueryStatementNestedRestriction) : null;
 
   return (
-    <div className="gf-form">
-      {index === 0 ? (
-        <InlineFormLabel className="query-keyword" width={8}>
-          WHERE
-        </InlineFormLabel>
-      ) : (
-        <ClauseOperatorEditor operator={clause.operator} onChange={handleOperatorChange} />
-      )}
-      {restriction && (
-        <FieldInputWithActions
+    <>
+      <div>
+        <EditorRow
           actions={
-            <>
-              <Button variant="secondary" size="xs" title="Add restriction" onClick={handleAddAfterClick}>
-                <Icon name="plus" />
-              </Button>
-              <Button variant="secondary" size="xs" onClick={handleAddNestedAfterClick}>
-                <Icon name="folder-plus" title="Add nested restriction" />
-              </Button>
-              <Button variant="secondary" size="xs" onClick={handleRemoveClick}>
-                <Icon name="trash-alt" title="Remove restriction" />
-              </Button>
-            </>
+            <EditorHBox>
+              <EditorRowActionButton name="plus" title="Add restriction" onClick={handleAddAfterClick} />
+              <EditorRowActionButton
+                name="folder-plus"
+                title="Add nested restriction"
+                onClick={handleAddNestedAfterClick}
+              />
+              <EditorRowActionButton name="trash-alt" title="Remove restriction" onClick={handleRemoveClick} />
+            </EditorHBox>
+          }
+          label={
+            index === 0 ? (
+              <InlineFormLabel className="query-keyword" width={8}>
+                WHERE
+              </InlineFormLabel>
+            ) : (
+              <ClauseOperatorEditor operator={clause.operator} onChange={handleOperatorChange} />
+            )
           }
         >
-          <RestrictionEditor
-            attributeOptions={attributeOptions}
-            restriction={restriction}
-            onChange={handleRestrictionChange}
-          />
-        </FieldInputWithActions>
-      )}
+          <EditorHBox>
+            {restriction && (
+              <RestrictionEditor
+                attributeOptions={attributeOptions}
+                restriction={restriction}
+                onChange={handleRestrictionChange}
+              />
+            )}
+          </EditorHBox>
+        </EditorRow>
+      </div>
       {nestedRestriction && (
-        <FieldInputRows>
+        <div className={withIndentedBorder}>
           <ClausesEditor
             key={clause.id}
             clauses={nestedRestriction.clauses}
+            depth={depth + 1}
             attributeOptions={attributeOptions}
             onChange={handleClausesChange}
           />
-        </FieldInputRows>
+        </div>
       )}
-    </div>
+    </>
   );
 };

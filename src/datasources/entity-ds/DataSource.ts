@@ -9,12 +9,14 @@ import {
   FieldType,
 } from '@grafana/data';
 
-import { EntityDataSourceOptions, EntityQuery, defaultEntityQuery } from './types';
+import { defaultEntityQuery } from './defaults';
+
+import { EntityDataSourceOptions, EntityQuery } from './types';
 
 import { QueryStatement } from './query/QueryStatement';
 import { getQueryStatementDisplayText } from './query/QueryDisplayText';
 
-import { ClientDelegate } from '../../common/ClientDelegate';
+import { ClientDelegate } from 'common/ClientDelegate';
 
 export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptions> {
   opennmsClient: ClientDelegate;

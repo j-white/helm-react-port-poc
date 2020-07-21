@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Button, Icon, LegacyForms, Tooltip } from '@grafana/ui';
 
-import { OpenNMSCustomAction } from '../types';
+import { OpenNMSCustomAction } from 'types';
 
 const { FormField } = LegacyForms;
 
