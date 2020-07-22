@@ -9,6 +9,8 @@ import {
   FieldType,
 } from '@grafana/data';
 
+import { Filter, NestedRestriction, Restriction, Comparators } from 'opennms-js-ts';
+
 import { defaultEntityQuery } from './defaults';
 
 import { EntityDataSourceOptions, EntityQuery } from './types';
@@ -17,6 +19,7 @@ import { QueryStatement } from './query/QueryStatement';
 import { getQueryStatementDisplayText } from './query/QueryDisplayText';
 
 import { ClientDelegate } from 'common/ClientDelegate';
+import AlarmEntity from './AlarmEntity';
 
 export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptions> {
   opennmsClient: ClientDelegate;
@@ -35,28 +38,50 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
   }
 
   async query(options: DataQueryRequest<EntityQuery>): Promise<DataQueryResponse> {
-    const { range } = options;
-    const from = range!.from.valueOf();
-    const to = range!.to.valueOf();
+    // const { range } = options;
+    // const from = range!.from.valueOf();
+    // const to = range!.to.valueOf();
+    // const filter = options.filter || new Filter();
 
+    const filter = new Filter();
+    let entity = new AlarmEntity(this.opennmsClient, this);
+
+    const clonedFilter = this.buildQuery(filter, options);
+
+    let returnData = await entity.query(clonedFilter);
     const data = options.targets.map(target => {
-      const query = defaults(target, defaultEntityQuery);
-      const frame = new MutableDataFrame({
-        refId: query.refId,
-        fields: [
-          { name: 'time', type: FieldType.time },
-          { name: 'value', type: FieldType.number },
-        ],
+      let d = returnData[0];
+      let frame = new MutableDataFrame({
+        // refId: returnData.metadata,
+        refId: d.type,
+        fields: d.columns,
       });
-      const duration = to - from;
-      const step = duration / 1000;
-      for (let t = 0; t < duration; t += step) {
-        frame.add({ time: from + t, value: Math.sin((2 * Math.PI * t) / duration) });
-      }
+      d.rows.forEach(row => {
+        frame.add(row);
+      });
       return frame;
     });
-
     return { data };
+  }
+
+  buildQuery(filter: any, options: any) {
+    const clonedFilter = Filter.fromJson(filter);
+
+    // Before replacing any variables, add a global time range restriction (which is hidden to the user)
+    // This behavior should probably be _in_ the entity, but... ¯\_(ツ)_/¯
+    if (options && options.enforceTimeRange) {
+      if (!options.entity || options.entity.type === 'alarm') {
+        clonedFilter.withAndRestriction(
+          new NestedRestriction()
+            .withAndRestriction(new Restriction('lastEventTime', Comparators.GE, '$range_from'))
+            .withAndRestriction(new Restriction('lastEventTime', Comparators.LE, '$range_to'))
+        );
+      }
+    }
+
+    // Substitute $<variable> or [[variable]] in the restriction value
+    // this.substitute(clonedFilter.clauses, options);
+    return clonedFilter;
   }
 
   async testDatasource() {

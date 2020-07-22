@@ -556,6 +556,7 @@ export class ClientDelegate {
     N: any,
     start: number,
     end: number,
+    step: number,
     includeOther: any,
     nodeCriteria: string,
     interfaceId: number
