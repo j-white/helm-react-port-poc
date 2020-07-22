@@ -2,13 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Defaults } from 'types';
 
-import {
-  EntityQuery,
-  EntityQueryStatementClause,
-  EntityQueryStatementOrderBy,
-  EntityQueryStatementFilter,
-  EntityDataSourceOptions,
-} from './types';
+import { ClauseConfig, EntityQuery, EntityDataSourceOptions, FilterConfig, OrderByConfig } from './types';
 
 type EntityQueryDefaults = Defaults<EntityQuery, 'featuredAttributes' | 'statement'>;
 
@@ -26,7 +20,7 @@ export const defaultEntityDataSourceOptions: EntityDataSourceOptionsDefaults = {
   useGrafanaUser: false,
 };
 
-export function createEmptyClause(): EntityQueryStatementClause {
+export function createEmptyClause(): ClauseConfig {
   return {
     id: uuidv4(),
     restriction: {
@@ -38,7 +32,7 @@ export function createEmptyClause(): EntityQueryStatementClause {
   };
 }
 
-export function createEmptyNestedClause(): EntityQueryStatementClause {
+export function createEmptyNestedClause(): ClauseConfig {
   return {
     id: uuidv4(),
     restriction: {
@@ -48,7 +42,7 @@ export function createEmptyNestedClause(): EntityQueryStatementClause {
   };
 }
 
-export function createEmptyOrderBy(): EntityQueryStatementOrderBy {
+export function createEmptyOrderBy(): OrderByConfig {
   return {
     id: uuidv4(),
     attribute: '',
@@ -56,7 +50,7 @@ export function createEmptyOrderBy(): EntityQueryStatementOrderBy {
   };
 }
 
-export function createDefaultFilter(): EntityQueryStatementFilter {
+export function createDefaultFilter(): FilterConfig {
   return {
     clauses: [createEmptyClause()],
     orderBy: [createEmptyOrderBy()],

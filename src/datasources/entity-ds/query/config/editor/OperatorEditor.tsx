@@ -3,23 +3,9 @@ import { css, cx } from 'emotion';
 
 import { Icon, InlineFormLabel, Select } from '@grafana/ui';
 
-import { EntityQueryStatementOperator, EntityQueryStatementOperatorType } from 'datasources/entity-ds/types';
+import { OperatorConfig, OperatorType } from 'datasources/entity-ds/types';
 
-interface OperatorOption {
-  label: string;
-  value: EntityQueryStatementOperatorType;
-}
-
-const operatorOptions: OperatorOption[] = [
-  {
-    label: 'AND',
-    value: 'AND',
-  },
-  {
-    label: 'OR',
-    value: 'OR',
-  },
-];
+import { operatorOptions } from '../OperatorConfig';
 
 const withBorder = css`
   border-style: solid;
@@ -27,12 +13,12 @@ const withBorder = css`
 `;
 
 type Props = {
-  operator: EntityQueryStatementOperator;
-  onChange: (value: EntityQueryStatementOperator) => void;
+  operator: OperatorConfig;
+  onChange: (value: OperatorConfig) => void;
 };
 
-export const ClauseOperatorEditor: React.FC<Props> = ({ operator, onChange }) => {
-  const handleOperatorChange = (operatorType: EntityQueryStatementOperatorType) => {
+export const OperatorEditor: React.FC<Props> = ({ operator, onChange }) => {
+  const handleOperatorChange = (operatorType: OperatorType) => {
     onChange({ label: operatorType });
   };
 

@@ -9,7 +9,7 @@ import { EditorRowActionButton } from 'common/components/EditorRowActionButton';
 
 import { createEmptyOrderBy } from 'datasources/entity-ds/defaults';
 
-import { EntityAttributeOption, EntityQueryStatementOrderBy } from 'datasources/entity-ds/types';
+import { EntityAttributeOption, OrderByConfig } from 'datasources/entity-ds/types';
 
 import { OrderByEditor } from './OrderByEditor';
 
@@ -25,12 +25,12 @@ const orderByTooltop = (
 
 type Props = {
   attributeOptions: EntityAttributeOption[];
-  orderBys: EntityQueryStatementOrderBy[];
-  onChange: (orderBys: EntityQueryStatementOrderBy[]) => void;
+  orderBys: OrderByConfig[];
+  onChange: (orderBys: OrderByConfig[]) => void;
 };
 
 export const OrderBysEditor: React.FC<Props> = ({ attributeOptions, orderBys, onChange }) => {
-  const handleOrderByChange = (proposedOrderBy: EntityQueryStatementOrderBy) => {
+  const handleOrderByChange = (proposedOrderBy: OrderByConfig) => {
     const index = orderBys.findIndex(matchById(proposedOrderBy));
     if (index < 0) {
       throw new Error('Order by not found.');
@@ -42,14 +42,14 @@ export const OrderBysEditor: React.FC<Props> = ({ attributeOptions, orderBys, on
     onChange(updatedOrderBy);
   };
 
-  const handleOrderByAdd = (afterOrderBy: EntityQueryStatementOrderBy) => {
+  const handleOrderByAdd = (afterOrderBy: OrderByConfig) => {
     const index = orderBys.findIndex(matchById(afterOrderBy)) + 1;
     const updatedOrderBy = [...orderBys.slice(0, index), createEmptyOrderBy(), ...orderBys.slice(index)];
 
     onChange(updatedOrderBy);
   };
 
-  const handleOrderByRemove = (orderByToRemove: EntityQueryStatementOrderBy) => {
+  const handleOrderByRemove = (orderByToRemove: OrderByConfig) => {
     const filteredOrderBy = orderBys.filter(excludeById(orderByToRemove));
     const updatedOrderBy = filteredOrderBy.length > 0 ? filteredOrderBy : [createEmptyOrderBy()];
 

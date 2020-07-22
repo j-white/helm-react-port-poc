@@ -1,6 +1,6 @@
 import { Clause, Comparators, NestedRestriction, OrderBy, Restriction } from 'opennms-js-ts';
 
-import { QueryStatement } from './QueryStatement';
+import { Statement } from './Statement';
 
 function getRestrictionDisplayText(restriction: Restriction): string {
   const { attribute, comparator, value } = restriction;
@@ -46,7 +46,7 @@ function getOrderBysDisplayText(orderBys: OrderBy[]): string {
   return orderBys.map(getOrderByDisplayText).join(', ');
 }
 
-export function getQueryStatementDisplayText(statement: QueryStatement): string {
+export function getStatementDisplayText(statement: Statement): string {
   const { entityType, filter } = statement;
 
   let queryText = `select all ${entityType}s`;

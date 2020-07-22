@@ -7,16 +7,18 @@ import { EditorRow } from 'common/components/EditorRow';
 import { EditorRowActionButton } from 'common/components/EditorRowActionButton';
 
 import {
+  ClauseConfig,
   EntityAttributeOption,
-  EntityQueryStatementClause,
-  EntityQueryStatementNestedRestriction,
-  EntityQueryStatementOperator,
-  EntityQueryStatementRestriction,
+  NestedRestrictionConfig,
+  OperatorConfig,
+  RestrictionConfig,
 } from 'datasources/entity-ds/types';
 
-import { ClauseOperatorEditor } from './ClauseOperatorEditor';
+import { isNestedClause } from '../ClauseConfig';
+
 import { ClausesEditor } from './ClausesEditor';
 import { EditorHBox } from 'common/components/EditorHBox';
+import { OperatorEditor } from './OperatorEditor';
 import { RestrictionEditor } from './RestrictionEditor';
 
 const withAddHighlight = css`
@@ -55,7 +57,7 @@ const withRemoveHighlight = css`
 
 const withIndentedBorder = css`
   margin-left: 8px;
-  padding-left: 8px;
+  padding-left: 11px;
 
   position: relative;
 
@@ -78,14 +80,14 @@ const withIndentedBorder = css`
 
 type Props = {
   attributeOptions: EntityAttributeOption[];
-  clause: EntityQueryStatementClause;
+  clause: ClauseConfig;
   depth: number;
   index: number;
   siblingCount: number;
-  onAddAfter: (clause: EntityQueryStatementClause) => void;
-  onAddNestedAfter: (clause: EntityQueryStatementClause) => void;
-  onChange: (clause: EntityQueryStatementClause) => void;
-  onRemove: (clause: EntityQueryStatementClause) => void;
+  onAddAfter: (clause: ClauseConfig) => void;
+  onAddNestedAfter: (clause: ClauseConfig) => void;
+  onChange: (clause: ClauseConfig) => void;
+  onRemove: (clause: ClauseConfig) => void;
 };
 
 export const ClauseEditor: React.FC<Props> = ({
@@ -102,14 +104,14 @@ export const ClauseEditor: React.FC<Props> = ({
   const [showAddHighlight, setShowAddHighlight] = useState(false);
   const [showRemoveHighlight, setShowRemoveHighlight] = useState(false);
 
-  const handleOperatorChange = (operator: EntityQueryStatementOperator) => {
+  const handleOperatorChange = (operator: OperatorConfig) => {
     onChange({
       ...clause,
       operator,
     });
   };
 
-  const handleRestrictionChange = (restriction: EntityQueryStatementRestriction) => {
+  const handleRestrictionChange = (restriction: RestrictionConfig) => {
     onChange({
       ...clause,
       restriction,
@@ -128,7 +130,7 @@ export const ClauseEditor: React.FC<Props> = ({
     onRemove(clause);
   };
 
-  const handleClausesChange = (clauses: EntityQueryStatementClause[]) => {
+  const handleClausesChange = (clauses: ClauseConfig[]) => {
     onChange({
       ...clause,
       restriction: {
@@ -137,9 +139,9 @@ export const ClauseEditor: React.FC<Props> = ({
     });
   };
 
-  const isNestedRestriction = 'clauses' in clause.restriction;
-  const restriction = !isNestedRestriction ? (clause.restriction as EntityQueryStatementRestriction) : null;
-  const nestedRestriction = isNestedRestriction ? (clause.restriction as EntityQueryStatementNestedRestriction) : null;
+  const isNested = isNestedClause(clause);
+  const restriction = !isNested ? (clause.restriction as RestrictionConfig) : null;
+  const nestedRestriction = isNested ? (clause.restriction as NestedRestrictionConfig) : null;
 
   return (
     <div className={cx(showAddHighlight && withAddHighlight, showRemoveHighlight && withRemoveHighlight)}>
@@ -185,7 +187,7 @@ export const ClauseEditor: React.FC<Props> = ({
                 WHERE
               </InlineFormLabel>
             ) : (
-              <ClauseOperatorEditor operator={clause.operator} onChange={handleOperatorChange} />
+              <OperatorEditor operator={clause.operator} onChange={handleOperatorChange} />
             )
           }
         >

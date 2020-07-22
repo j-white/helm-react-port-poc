@@ -6,22 +6,16 @@ import { LegacyForms } from '@grafana/ui';
 import { EditorGroup } from 'common/components/EditorGroup';
 
 import { createDefaultFilter, defaultEntityQuery } from './defaults';
-import {
-  EntityDataSourceOptions,
-  EntityQuery,
-  EntityQueryStatementClause,
-  EntityQueryStatementOrderBy,
-  EntityType,
-} from './types';
+import { ClauseConfig, EntityDataSourceOptions, EntityQuery, EntityType, OrderByConfig } from './types';
 
 import { DataSource } from './DataSource';
 
 import { alarmAttributeOptions } from './mock/MockAttributeOptions';
 
-import { ClausesEditor } from './query/editor/ClausesEditor';
-import { EntityTypeEditor } from './query/editor/EntityTypeEditor';
-import { LimitEditor } from './query/editor/LimitEditor';
-import { OrderBysEditor } from './query/editor/OrderBysEditor';
+import { ClausesEditor } from './query/config/editor/ClausesEditor';
+import { EntityTypeEditor } from './query/config/editor/EntityTypeEditor';
+import { LimitEditor } from './query/config/editor/LimitEditor';
+import { OrderBysEditor } from './query/config/editor/OrderBysEditor';
 
 const { Switch } = LegacyForms;
 
@@ -37,7 +31,7 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
     statement = defaultEntityQuery.statement,
   } = query;
 
-  console.log('query:', JSON.stringify(query, null, 2));
+  // console.log('query (raw config):', JSON.stringify(query, null, 2));
 
   const { entityType, filter = createDefaultFilter() } = statement;
   const { clauses, limit, orderBy } = filter;
@@ -47,7 +41,7 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
     onRunQuery();
   };
 
-  const handleClausesChange = (clauses: EntityQueryStatementClause[]) => {
+  const handleClausesChange = (clauses: ClauseConfig[]) => {
     onChange({
       ...query,
       statement: {
@@ -61,7 +55,7 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
     onRunQuery();
   };
 
-  const handleOrderBysChange = (orderBy: EntityQueryStatementOrderBy[]) => {
+  const handleOrderBysChange = (orderBy: OrderByConfig[]) => {
     onChange({
       ...query,
       statement: {

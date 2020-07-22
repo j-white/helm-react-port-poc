@@ -1,12 +1,9 @@
-import defaults from 'lodash/defaults';
-
 import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   MutableDataFrame,
-  FieldType,
 } from '@grafana/data';
 
 import { Filter, NestedRestriction, Restriction, Comparators } from 'opennms-js-ts';
@@ -15,11 +12,13 @@ import { defaultEntityQuery } from './defaults';
 
 import { EntityDataSourceOptions, EntityQuery } from './types';
 
-import { QueryStatement } from './query/QueryStatement';
-import { getQueryStatementDisplayText } from './query/QueryDisplayText';
+import { Statement } from './query/Statement';
+import { getStatementDisplayText } from './query/QueryDisplayText';
 
 import { ClientDelegate } from 'common/ClientDelegate';
 import AlarmEntity from './AlarmEntity';
+
+import { sanitizeStatement } from './query/config/StatementConfig';
 
 export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptions> {
   opennmsClient: ClientDelegate;
@@ -31,7 +30,7 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
   getQueryDisplayText(query: EntityQuery): string {
     try {
       const { statement = defaultEntityQuery.statement } = query;
-      return getQueryStatementDisplayText(QueryStatement.fromJson(statement));
+      return getStatementDisplayText(Statement.fromJson(statement));
     } catch (error) {
       return `ERROR: ${error}`;
     }
@@ -43,30 +42,36 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
     // const to = range!.to.valueOf();
     // const filter = options.filter || new Filter();
 
-    const filter = new Filter();
-    let entity = new AlarmEntity(this.opennmsClient, this);
+    const data = await Promise.all(
+      options.targets.map(async target => {
+        const statementConfig = target.statement ? target.statement : defaultEntityQuery.statement;
+        const statement = Statement.fromJson(sanitizeStatement(statementConfig));
+        console.log('statement (sanitized):', JSON.stringify(statement, null, 2));
 
-    const clonedFilter = this.buildQuery(filter, options);
+        // TODO: respect entityType in statement, handle "node"
+        let entity = new AlarmEntity(this.opennmsClient, this);
+        const clonedFilter = this.buildQuery(statement.filter, options);
+        const returnData = await entity.query(clonedFilter);
 
-    let returnData = await entity.query(clonedFilter);
-    const data = options.targets.map(target => {
-      let d = returnData[0];
-      let frame = new MutableDataFrame({
-        // refId: returnData.metadata,
-        refId: d.type,
-        fields: d.columns,
-      });
-      d.rows.forEach(row => {
-        frame.add(row);
-      });
-      return frame;
-    });
+        let d = returnData[0];
+        let frame = new MutableDataFrame({
+          // refId: returnData.metadata,
+          refId: d.type,
+          fields: d.columns,
+        });
+        d.rows.forEach(row => {
+          frame.add(row);
+        });
+        return frame;
+      })
+    );
     return { data };
   }
 
   buildQuery(filter: any, options: any) {
     const clonedFilter = Filter.fromJson(filter);
 
+    // TODO: Revisit if this is how this still works in Grafana 7 (or should we be applying the range above?)
     // Before replacing any variables, add a global time range restriction (which is hidden to the user)
     // This behavior should probably be _in_ the entity, but... ¯\_(ツ)_/¯
     if (options && options.enforceTimeRange) {

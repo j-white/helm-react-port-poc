@@ -1,19 +1,15 @@
 import React from 'react';
 
-import {
-  EntityAttributeOption,
-  EntityQueryStatementComparator,
-  EntityQueryStatementRestriction,
-} from 'datasources/entity-ds/types';
+import { EntityAttributeOption, ComparatorConfig, RestrictionConfig } from 'datasources/entity-ds/types';
 
+import { ComparatorEditor } from './ComparatorEditor';
 import { RestrictionAttributeEditor } from './RestrictionAttributeEditor';
-import { RestrictionComparatorEditor } from './RestrictionComparatorEditor';
 import { RestrictionValueEditor } from './RestrictionValueEditor';
 
 type Props = {
   attributeOptions: EntityAttributeOption[];
-  restriction: EntityQueryStatementRestriction;
-  onChange: (value: EntityQueryStatementRestriction) => void;
+  restriction: RestrictionConfig;
+  onChange: (value: RestrictionConfig) => void;
 };
 
 export const RestrictionEditor: React.FC<Props> = ({ attributeOptions, restriction, onChange }) => {
@@ -27,7 +23,7 @@ export const RestrictionEditor: React.FC<Props> = ({ attributeOptions, restricti
     });
   };
 
-  const handleComparatorChange = (comparator: EntityQueryStatementComparator) => {
+  const handleComparatorChange = (comparator: ComparatorConfig) => {
     onChange({
       ...restriction,
       comparator,
@@ -48,7 +44,7 @@ export const RestrictionEditor: React.FC<Props> = ({ attributeOptions, restricti
         attributeOptions={attributeOptions}
         onChange={handleAttributeChange}
       />
-      <RestrictionComparatorEditor comparator={comparator} disabled={!attribute} onChange={handleComparatorChange} />
+      <ComparatorEditor comparator={comparator} disabled={!attribute} onChange={handleComparatorChange} />
       <RestrictionValueEditor value={value} disabled={!attribute} onChange={handleValueChange} />
     </>
   );

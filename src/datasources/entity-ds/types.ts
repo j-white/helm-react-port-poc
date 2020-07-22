@@ -2,60 +2,60 @@ import { DataQuery, DataSourceJsonData, KeyValue } from '@grafana/data';
 
 export interface EntityQuery extends DataQuery {
   featuredAttributes?: boolean;
-  statement: EntityQueryStatement;
+  statement: StatementConfig;
 }
 
-export interface EntityQueryStatement {
+export interface StatementConfig {
   entityType: EntityType;
-  filter?: EntityQueryStatementFilter;
+  filter?: FilterConfig;
 }
 
 export type EntityType = 'alarm' | 'node';
 
-export interface EntityQueryStatementFilter {
-  clauses: EntityQueryStatementClause[];
-  orderBy: EntityQueryStatementOrderBy[];
+export interface FilterConfig {
+  clauses: ClauseConfig[];
+  orderBy: OrderByConfig[];
   limit: number;
 }
 
-export interface EntityQueryStatementClause {
+export interface ClauseConfig {
   id: string;
-  restriction: EntityQueryStatementRestriction | EntityQueryStatementNestedRestriction;
-  operator: EntityQueryStatementOperator;
+  operator: OperatorConfig;
+  restriction: RestrictionConfig | NestedRestrictionConfig;
 }
 
-export interface EntityQueryStatementRestriction {
+export interface RestrictionConfig {
   attribute: string;
-  comparator: EntityQueryStatementComparator;
+  comparator: ComparatorConfig;
   value?: any;
 }
 
-export type EntityQueryStatementComparatorType = 'EQ' | 'NE' | 'GT' | 'LT' | 'GE' | 'LE';
+export type ComparatorType = 'EQ' | 'NE' | 'GT' | 'LT' | 'GE' | 'LE';
 
-export interface EntityQueryStatementComparator {
-  label: EntityQueryStatementComparatorType;
+export interface ComparatorConfig {
+  label: ComparatorType;
 }
 
-export interface EntityQueryStatementNestedRestriction {
-  clauses: EntityQueryStatementClause[];
+export interface NestedRestrictionConfig {
+  clauses: ClauseConfig[];
 }
 
-export type EntityQueryStatementOperatorType = 'AND' | 'OR';
+export type OperatorType = 'AND' | 'OR';
 
-export interface EntityQueryStatementOperator {
-  label: EntityQueryStatementOperatorType;
+export interface OperatorConfig {
+  label: OperatorType;
 }
 
-export interface EntityQueryStatementOrderBy {
+export interface OrderByConfig {
   id: string;
   attribute: string;
-  order: EntityQueryStatementOrder;
+  order: OrderConfig;
 }
 
-export type EntityQueryStatementOrderType = 'ASC' | 'DESC';
+export type OrderType = 'ASC' | 'DESC';
 
-export interface EntityQueryStatementOrder {
-  label: EntityQueryStatementOrderType;
+export interface OrderConfig {
+  label: OrderType;
 }
 
 export interface EntityPropertiesResult {

@@ -4,19 +4,19 @@ import { matchById, excludeById } from 'common/Identifiable';
 
 import { createEmptyClause, createEmptyNestedClause } from 'datasources/entity-ds/defaults';
 
-import { EntityAttributeOption, EntityQueryStatementClause } from 'datasources/entity-ds/types';
+import { ClauseConfig, EntityAttributeOption } from 'datasources/entity-ds/types';
 
 import { ClauseEditor } from './ClauseEditor';
 
 type Props = {
   attributeOptions: EntityAttributeOption[];
-  clauses: EntityQueryStatementClause[];
+  clauses: ClauseConfig[];
   depth: number;
-  onChange: (clauses: EntityQueryStatementClause[]) => void;
+  onChange: (clauses: ClauseConfig[]) => void;
 };
 
 export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, depth, onChange }) => {
-  const handleClauseChange = (clause: EntityQueryStatementClause) => {
+  const handleClauseChange = (clause: ClauseConfig) => {
     const index = clauses.findIndex(matchById(clause));
     if (index < 0) {
       throw new Error('Clause not found.');
@@ -28,21 +28,21 @@ export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, dept
     onChange(updatedClauses);
   };
 
-  const handleClauseAdd = (afterClause: EntityQueryStatementClause) => {
+  const handleClauseAdd = (afterClause: ClauseConfig) => {
     const index = clauses.findIndex(matchById(afterClause)) + 1;
     const updatedClauses = [...clauses.slice(0, index), createEmptyClause(), ...clauses.slice(index)];
 
     onChange(updatedClauses);
   };
 
-  const handleClauseAddNestedAfter = (afterClause: EntityQueryStatementClause) => {
+  const handleClauseAddNestedAfter = (afterClause: ClauseConfig) => {
     const index = clauses.findIndex(matchById(afterClause)) + 1;
     const updatedClauses = [...clauses.slice(0, index), createEmptyNestedClause(), ...clauses.slice(index)];
 
     onChange(updatedClauses);
   };
 
-  const handleClauseRemove = (clauseToRemove: EntityQueryStatementClause) => {
+  const handleClauseRemove = (clauseToRemove: ClauseConfig) => {
     const filteredClauses = clauses.filter(excludeById(clauseToRemove));
     const updatedClauses = filteredClauses.length > 0 ? filteredClauses : [createEmptyClause()];
 
