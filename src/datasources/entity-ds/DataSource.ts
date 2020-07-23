@@ -29,7 +29,8 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
 
   getQueryDisplayText(query: EntityQuery): string {
     try {
-      const { statement = defaultEntityQuery.statement } = query;
+      const statementConfig = query.statement ? query.statement : defaultEntityQuery.statement;
+      const statement = Statement.fromJson(sanitizeStatement(statementConfig));
       return getStatementDisplayText(Statement.fromJson(statement));
     } catch (error) {
       return `ERROR: ${error}`;
