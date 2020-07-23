@@ -5,7 +5,7 @@ export class Statement {
   filter: Filter;
 
   static fromJson(queryJson: any): Statement {
-    return new Statement(queryJson.entityType, Filter.fromJson(queryJson.filter), queryJson.limit);
+    return new Statement(queryJson.entityType, Filter.fromJson(queryJson.filter));
   }
 
   constructor(entityType = 'alarm', filter = new Filter()) {

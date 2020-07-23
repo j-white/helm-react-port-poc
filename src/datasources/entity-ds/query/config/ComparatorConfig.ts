@@ -32,6 +32,10 @@ export const comparatorOptions: ComparatorOption[] = [
   },
 ];
 
+const fallbackComparators = ['EQ'];
+
+export const fallbackComparatorOptions = comparatorOptions.filter(option => fallbackComparators.includes(option.value));
+
 const comparators: ComparatorType[] = comparatorOptions.map(option => option.value);
 
 export function isPopulated(comparator: ComparatorConfig): boolean {

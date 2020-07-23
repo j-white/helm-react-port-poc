@@ -27,7 +27,7 @@ export interface ClauseConfig {
 export interface RestrictionConfig {
   attribute: string;
   comparator: ComparatorConfig;
-  value?: any;
+  value: string;
 }
 
 export type ComparatorType = 'EQ' | 'NE' | 'GT' | 'LT' | 'GE' | 'LE';
@@ -83,6 +83,11 @@ export interface EntityAttributeOption {
   orderBy: boolean;
   iplike: boolean;
   values?: KeyValue<string>;
+}
+
+export interface EntityAttributeValueOption {
+  label: string;
+  value: string;
 }
 
 /**

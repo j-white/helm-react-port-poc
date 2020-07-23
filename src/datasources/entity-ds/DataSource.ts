@@ -6,14 +6,14 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 
-import { Filter, NestedRestriction, Restriction, Comparators } from 'opennms-js-ts';
+import { Comparators, Filter, NestedRestriction, Restriction } from 'opennms-js-ts';
 
 import { defaultEntityQuery } from './defaults';
 
 import { EntityDataSourceOptions, EntityQuery } from './types';
 
-import { Statement } from './query/Statement';
 import { getStatementDisplayText } from './query/QueryDisplayText';
+import { Statement } from './query/Statement';
 
 import { ClientDelegate } from 'common/ClientDelegate';
 import AlarmEntity from './AlarmEntity';

@@ -4,15 +4,16 @@ import { Select } from '@grafana/ui';
 
 import { ComparatorConfig, ComparatorType } from 'datasources/entity-ds/types';
 
-import { comparatorOptions } from '../ComparatorConfig';
+import { ComparatorOption } from '../ComparatorConfig';
 
 type Props = {
   comparator: ComparatorConfig;
+  comparatorOptions: ComparatorOption[];
   disabled?: boolean;
   onChange: (value: ComparatorConfig) => void;
 };
 
-export const ComparatorEditor: React.FC<Props> = ({ comparator, disabled, onChange }) => {
+export const ComparatorEditor: React.FC<Props> = ({ comparator, comparatorOptions, disabled, onChange }) => {
   const handleComparatorChange = (comparatorType: ComparatorType) => {
     onChange({ label: comparatorType });
   };

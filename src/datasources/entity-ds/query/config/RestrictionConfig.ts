@@ -6,8 +6,8 @@ function isPopulatedAttribute(attribute: string): boolean {
   return Boolean(attribute && attribute.trim().length > 0);
 }
 
-function isPopulatedValue(value: any): boolean {
-  return value !== undefined;
+function isPopulatedValue(value: string): boolean {
+  return value.length > 0;
 }
 
 export function isPopulated(restriction: RestrictionConfig): boolean {
