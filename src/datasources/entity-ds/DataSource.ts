@@ -19,6 +19,7 @@ import { ClientDelegate } from 'common/ClientDelegate';
 import AlarmEntity from './AlarmEntity';
 
 import { sanitizeStatement } from './query/config/StatementConfig';
+import NodeEntity from './NodeEntity';
 
 export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptions> {
   opennmsClient: ClientDelegate;
@@ -48,19 +49,20 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
         const statementConfig = target.statement ? target.statement : defaultEntityQuery.statement;
         const statement = Statement.fromJson(sanitizeStatement(statementConfig));
         console.log('statement (sanitized):', JSON.stringify(statement, null, 2));
+        let entity;
+        if (statement.entityType && statement.entityType === 'node') {
+          entity = new NodeEntity(this.opennmsClient, this);
+        } else {
+          entity = new AlarmEntity(this.opennmsClient, this);
+        }
 
-        // TODO: respect entityType in statement, handle "node"
-        let entity = new AlarmEntity(this.opennmsClient, this);
         const clonedFilter = this.buildQuery(statement.filter, options);
         const returnData = await entity.query(clonedFilter);
-
-        let d = returnData[0];
         let frame = new MutableDataFrame({
-          // refId: returnData.metadata,
-          refId: d.type,
-          fields: d.columns,
+          refId: returnData.type,
+          fields: returnData.columns,
         });
-        d.rows.forEach(row => {
+        returnData.rows.forEach((row: any) => {
           frame.add(row);
         });
         return frame;

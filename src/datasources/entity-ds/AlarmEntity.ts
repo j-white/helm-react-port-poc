@@ -290,15 +290,13 @@ export default class AlarmEntity extends Entity {
       };
     });
 
-    return [
-      {
-        columns: columns.filter((column: { visible: boolean }) => column.visible !== false),
-        meta: {
-          entity_metadata: metas,
-        },
-        rows: rows,
-        type: 'table',
+    return {
+      columns: columns.filter((column: { visible: boolean }) => column.visible !== false),
+      meta: {
+        entity_metadata: metas,
       },
-    ];
+      rows: rows,
+      type: 'table',
+    };
   }
 }
