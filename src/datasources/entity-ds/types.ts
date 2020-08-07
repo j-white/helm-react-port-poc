@@ -1,16 +1,20 @@
 import { DataQuery, DataSourceJsonData, KeyValue } from '@grafana/data';
 
+// ---
+// Entity query and its constituent types
+// ---
+
 export interface EntityQuery extends DataQuery {
   featuredAttributes?: boolean;
   statement: StatementConfig;
 }
 
+export type EntityType = 'alarm' | 'node';
+
 export interface StatementConfig {
   entityType: EntityType;
   filter?: FilterConfig;
 }
-
-export type EntityType = 'alarm' | 'node';
 
 export interface FilterConfig {
   clauses: ClauseConfig[];
@@ -43,6 +47,8 @@ export interface NestedRestrictionConfig {
 export type OperatorType = 'AND' | 'OR';
 
 export interface OperatorConfig {
+  // NOTE: named "label" to align with opennms-js Restriction JSON deserialization logic
+  // NOTE: corresponds to OperatorConfig value (rather than human-readable OperatorConfig label)
   label: OperatorType;
 }
 
@@ -55,8 +61,28 @@ export interface OrderByConfig {
 export type OrderType = 'ASC' | 'DESC';
 
 export interface OrderConfig {
+  // NOTE: named "label" to align with opennms-js OrderBy JSON deserialization logic
   label: OrderType;
 }
+
+// ---
+// Options tailored for use in Grafana UI Select components
+// ---
+
+export interface RestrictionAttributeOption {
+  attribute: string;
+}
+
+export interface RestrictionComparatorOption {
+  comparator: ComparatorType;
+}
+
+export interface RestrictionAttributeValueOption {
+  label: string;
+  value: string;
+}
+
+// remove?
 
 export interface EntityPropertiesResult {
   offset: number;
@@ -80,14 +106,26 @@ export interface EntityAttributeOption {
   label: string;
   value: string;
   type: EntityPropertyType;
-  orderBy: boolean;
-  iplike: boolean;
   values?: KeyValue<string>;
 }
 
 export interface EntityAttributeValueOption {
   label: string;
   value: string;
+}
+
+export interface EntityOrderAttributeOption {
+  label: string;
+  value: string;
+}
+
+// alarm table and featured attribute metadata
+
+export interface EntityColumn {
+  text: string;
+  resource?: string;
+  featured?: boolean;
+  visible?: boolean;
 }
 
 /**

@@ -3,19 +3,20 @@ import React from 'react';
 import { matchById, excludeById } from 'common/Identifiable';
 
 import { createEmptyClause, createEmptyNestedClause } from 'datasources/entity-ds/defaults';
-
-import { ClauseConfig, EntityAttributeOption } from 'datasources/entity-ds/types';
+import { EntityService } from 'datasources/entity-ds/entity/service/EntityService';
+import { ClauseConfig } from 'datasources/entity-ds/types';
 
 import { ClauseEditor } from './ClauseEditor';
 
 type Props = {
-  attributeOptions: EntityAttributeOption[];
   clauses: ClauseConfig[];
   depth: number;
+  entityService: EntityService;
+  featuredAttributes: boolean;
   onChange: (clauses: ClauseConfig[]) => void;
 };
 
-export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, depth, onChange }) => {
+export const ClausesEditor: React.FC<Props> = ({ clauses, depth, entityService, featuredAttributes, onChange }) => {
   const handleClauseChange = (clause: ClauseConfig) => {
     const index = clauses.findIndex(matchById(clause));
     if (index < 0) {
@@ -54,9 +55,10 @@ export const ClausesEditor: React.FC<Props> = ({ attributeOptions, clauses, dept
       {clauses.map((clause, index) => (
         <ClauseEditor
           key={clause.id}
-          attributeOptions={attributeOptions}
           clause={clause}
           depth={depth + 1}
+          entityService={entityService}
+          featuredAttributes={featuredAttributes}
           index={index}
           siblingCount={clauses.length}
           onAddAfter={handleClauseAdd}

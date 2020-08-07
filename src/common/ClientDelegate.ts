@@ -1,96 +1,118 @@
-import { Client, GrafanaHTTP, Comparators, Operators, Filter, OnmsAuthConfig, OnmsServer } from 'opennms-js-ts';
 import _ from 'lodash';
-import { getBackendSrv } from '@grafana/runtime';
+
+import {
+  Client,
+  Comparators,
+  Filter,
+  GrafanaHTTP,
+  Operators,
+  OnmsAuthConfig,
+  OnmsServer,
+  ServerMetadata,
+} from 'opennms-js-ts';
+
+import { getBackendSrv, BackendSrv } from '@grafana/runtime';
 import { DataSourceInstanceSettings } from '@grafana/data';
 
+function decorateError(err: any) {
+  let decoratedError = err;
+
+  if (err.err) {
+    decoratedError = err.err;
+  }
+  if (err.data && err.data.err) {
+    decoratedError = err.data.err;
+  }
+
+  let statusText = 'Request failed.';
+  // cancelled property causes the UI to never complete on failure
+  if (err.cancelled) {
+    statusText = 'Request timed out.';
+    delete err.cancelled;
+  }
+  if (err.data && err.data.cancelled) {
+    statusText = 'Request timed out.';
+    delete err.data.cancelled;
+  }
+
+  if (!decoratedError.message) {
+    decoratedError.message = decoratedError.statusText || statusText;
+  }
+  if (!decoratedError.status) {
+    decoratedError.status = 'error';
+  }
+
+  return decoratedError;
+}
+
 export class ClientDelegate {
-  backendSrv: any;
-  searchLimit: number;
-  client: Client | undefined;
   settings: DataSourceInstanceSettings<any>;
+  backendSrv: BackendSrv;
+  searchLimit: number;
+
+  client: Client | undefined;
+
   constructor(settings: DataSourceInstanceSettings<any>) {
     this.settings = settings;
     this.backendSrv = getBackendSrv();
     this.searchLimit = 1000;
-    this.client = undefined;
   }
 
-  async decorateError(err: any) {
-    let ret = err;
-    if (err.err) {
-      ret = err.err;
-    }
-    if (err.data && err.data.err) {
-      ret = err.data.err;
-    }
-    let statusText = 'Request failed.';
-
-    // cancelled property causes the UI to never complete on failure
-    if (err.cancelled) {
-      statusText = 'Request timed out.';
-      delete err.cancelled;
-    }
-    if (err.data && err.data.cancelled) {
-      statusText = 'Request timed out.';
-      delete err.data.cancelled;
+  async getClient(): Promise<Client> {
+    if (this.client) {
+      return this.client;
     }
 
-    if (!ret.message) {
-      ret.message = ret.statusText || statusText;
+    let timeout;
+    if (this.settings.jsonData && this.settings.jsonData.timeout) {
+      timeout = parseInt(this.settings.jsonData.timeout, 10) * 1000;
     }
-    if (!ret.status) {
-      ret.status = 'error';
+
+    let authConfig = undefined;
+    if (this.settings.basicAuth) {
+      // If basic auth is configured, pass the username and password to the client
+      // This allows the datasource to work in direct mode
+      // We need the raw username and password, so we decode the token
+      const token = this.settings.basicAuth.split(' ')[1];
+      const decodedToken = atob(token);
+      const username = decodedToken.split(':')[0];
+      const password = decodedToken.substring(username.length + 1, decodedToken.length);
+      authConfig = new OnmsAuthConfig(username, password);
     }
-    return Promise.reject(ret);
-  }
 
-  async getClient() {
-    if (!this.client) {
-      let timeout;
-      if (this.settings.jsonData && this.settings.jsonData.timeout) {
-        timeout = parseInt(this.settings.jsonData.timeout, 10) * 1000;
-      }
-
-      let authConfig = undefined;
-      if (this.settings.basicAuth) {
-        // If basic auth is configured, pass the username and password to the client
-        // This allows the datasource to work in direct mode
-        // We need the raw username and password, so we decode the token
-        const token = this.settings.basicAuth.split(' ')[1];
-        const decodedToken = atob(token);
-        const username = decodedToken.split(':')[0];
-        const password = decodedToken.substring(username.length + 1, decodedToken.length);
-        authConfig = new OnmsAuthConfig(username, password);
-      }
-      const server = OnmsServer.newBuilder(this.settings.url)
-        .setName(this.settings.name)
-        .setAuth(authConfig)
-        .build();
-      const http = new GrafanaHTTP(this.backendSrv, server, timeout);
-
-      if (http.server && http.server.name && http.server.url) {
-        try {
-          const metadata = await Client.getMetadata(http.server, http, timeout);
-          // Ensure the OpenNMS we are talking to is compatible
-          if (metadata.apiVersion() < 2) {
-            throw new Error('Unsupported Version');
-          }
-          http.server = OnmsServer.newBuilder(http.server.url)
-            .setName(this.settings.name)
-            .setAuth(authConfig)
-            .setMetadata(metadata)
-            .build();
-          this.client = new Client(http);
-          return this.client;
-        } catch (e) {
-          // in case of error, reset the client, otherwise
-          // the datasource may never recover
-          this.client = undefined;
-          throw e;
+    const server = OnmsServer.newBuilder(this.settings.url)
+      .setName(this.settings.name)
+      .setAuth(authConfig)
+      .build();
+    const http = new GrafanaHTTP(this.backendSrv, server, timeout);
+    if (http.server && http.server.name && http.server.url) {
+      try {
+        const metadata = await Client.getMetadata(http.server, http, timeout);
+        // Ensure the OpenNMS we are talking to is compatible
+        if (metadata.apiVersion() < 2) {
+          throw new Error('Unsupported Version');
         }
+        http.server = OnmsServer.newBuilder(http.server.url)
+          .setName(this.settings.name)
+          .setAuth(authConfig)
+          .setMetadata(metadata)
+          .build();
+        this.client = new Client(http);
+        return this.client;
+      } catch (e) {
+        // in case of error, reset the client, otherwise
+        // the datasource may never recover
+        this.client = undefined;
+        throw e;
       }
+    } else {
+      throw new Error('Incomplete configuration.');
     }
-    return this.client;
+  }
+
+  async getMetadata(): Promise<ServerMetadata> {
+    const client = (await this.getClient()) as Client;
+    return client.http!.server!.metadata!;
   }
 
   // Inventory (node) related functions
@@ -111,7 +133,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -123,7 +145,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -135,7 +157,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -160,7 +182,7 @@ export class ClientDelegate {
       // therefore fallback to EQ
       return [Comparators.EQ];
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -181,7 +203,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -193,7 +215,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -204,7 +226,7 @@ export class ClientDelegate {
         return alarmDao.escalate(alarmId);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -215,7 +237,7 @@ export class ClientDelegate {
         return alarmDao.clear(alarmId);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -226,7 +248,7 @@ export class ClientDelegate {
         return alarmDao.unacknowledge(alarmId, user);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -237,7 +259,7 @@ export class ClientDelegate {
         return alarmDao.acknowledge(alarmId, user);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -252,7 +274,7 @@ export class ClientDelegate {
         method: 'POST',
       });
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -263,7 +285,7 @@ export class ClientDelegate {
         return alarmDao.saveStickyMemo(alarmId, sticky, user);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -274,7 +296,7 @@ export class ClientDelegate {
         return alarmDao.deleteStickyMemo(alarmId);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -285,7 +307,7 @@ export class ClientDelegate {
         return alarmDao.saveJournalMemo(alarmId, journal, user);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -296,7 +318,7 @@ export class ClientDelegate {
         return alarmDao.deleteJournalMemo(alarmId);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -318,7 +340,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -343,7 +365,7 @@ export class ClientDelegate {
       // therefore fallback to EQ
       return [Comparators.EQ];
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -357,7 +379,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -369,7 +391,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -380,7 +402,7 @@ export class ClientDelegate {
         return feedbackDao.saveFeedback(feedback, situationId);
       }
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -394,7 +416,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -406,7 +428,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -426,7 +448,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -454,7 +476,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -473,7 +495,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -492,7 +514,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -520,7 +542,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -548,7 +570,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -575,7 +597,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -594,7 +616,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -606,7 +628,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -626,7 +648,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -646,7 +668,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -658,7 +680,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -670,7 +692,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -683,7 +705,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 
@@ -696,7 +718,7 @@ export class ClientDelegate {
       }
       return undefined;
     } catch (err) {
-      return this.decorateError(err);
+      throw decorateError(err);
     }
   }
 }

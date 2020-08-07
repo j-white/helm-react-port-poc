@@ -10,22 +10,37 @@ import { Comparators, Filter, NestedRestriction, Restriction } from 'opennms-js-
 
 import { defaultEntityQuery } from './defaults';
 
-import { EntityDataSourceOptions, EntityQuery } from './types';
+import { EntityDataSourceOptions, EntityQuery, EntityType } from './types';
 
 import { getStatementDisplayText } from './query/QueryDisplayText';
 import { Statement } from './query/Statement';
 
 import { ClientDelegate } from 'common/ClientDelegate';
-import AlarmEntity from './AlarmEntity';
 
 import { sanitizeStatement } from './query/config/StatementConfig';
+
+import AlarmEntity from './AlarmEntity';
 import NodeEntity from './NodeEntity';
+
+import { AlarmEntityService } from './entity/service/AlarmEntityService';
+import { EntityService } from './entity/service/EntityService';
+import { NodeEntityService } from './entity/service/NodeEntityService';
 
 export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptions> {
   opennmsClient: ClientDelegate;
   constructor(instanceSettings: DataSourceInstanceSettings<EntityDataSourceOptions>) {
     super(instanceSettings);
     this.opennmsClient = new ClientDelegate(instanceSettings);
+  }
+
+  getEntityService(entityType: EntityType): EntityService {
+    switch (entityType) {
+      case 'alarm':
+        return new AlarmEntityService(this);
+      case 'node':
+        // TODO: implement.
+        return new NodeEntityService(this);
+    }
   }
 
   getQueryDisplayText(query: EntityQuery): string {
@@ -39,10 +54,10 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
   }
 
   async query(options: DataQueryRequest<EntityQuery>): Promise<DataQueryResponse> {
+    // TODO: append range to statement filters
     // const { range } = options;
     // const from = range!.from.valueOf();
     // const to = range!.to.valueOf();
-    // const filter = options.filter || new Filter();
 
     const data = await Promise.all(
       options.targets.map(async target => {

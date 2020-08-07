@@ -2,10 +2,10 @@ import React from 'react';
 
 import { InlineFormLabel, Select } from '@grafana/ui';
 
-import { EditorHBox } from 'common/components/EditorHBox';
-import { EditorRow } from 'common/components/EditorRow';
-
 import { EntityType } from 'datasources/entity-ds/types';
+
+import { EditorHBox } from './common/EditorHBox';
+import { EditorRow } from './common/EditorRow';
 
 interface EntityTypeOption {
   label: string;

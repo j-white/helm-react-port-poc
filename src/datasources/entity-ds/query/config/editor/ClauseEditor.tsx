@@ -3,21 +3,15 @@ import { css, cx } from 'emotion';
 
 import { InlineFormLabel } from '@grafana/ui';
 
-import { EditorRow } from 'common/components/EditorRow';
-import { EditorRowActionButton } from 'common/components/EditorRowActionButton';
+import { EntityService } from 'datasources/entity-ds/entity/service/EntityService';
+import { isNestedClause } from 'datasources/entity-ds/query/config/ClauseConfig';
+import { ClauseConfig, NestedRestrictionConfig, OperatorConfig, RestrictionConfig } from 'datasources/entity-ds/types';
 
-import {
-  ClauseConfig,
-  EntityAttributeOption,
-  NestedRestrictionConfig,
-  OperatorConfig,
-  RestrictionConfig,
-} from 'datasources/entity-ds/types';
-
-import { isNestedClause } from '../ClauseConfig';
+import { EditorHBox } from './common/EditorHBox';
+import { EditorRow } from './common/EditorRow';
+import { EditorRowActionButton } from './common/EditorRowActionButton';
 
 import { ClausesEditor } from './ClausesEditor';
-import { EditorHBox } from 'common/components/EditorHBox';
 import { OperatorEditor } from './OperatorEditor';
 import { RestrictionEditor } from './RestrictionEditor';
 
@@ -79,9 +73,10 @@ const withIndentedBorder = css`
 `;
 
 type Props = {
-  attributeOptions: EntityAttributeOption[];
   clause: ClauseConfig;
   depth: number;
+  entityService: EntityService;
+  featuredAttributes: boolean;
   index: number;
   siblingCount: number;
   onAddAfter: (clause: ClauseConfig) => void;
@@ -91,9 +86,10 @@ type Props = {
 };
 
 export const ClauseEditor: React.FC<Props> = ({
-  attributeOptions,
   clause,
   depth,
+  entityService,
+  featuredAttributes,
   index,
   siblingCount,
   onAddAfter,
@@ -194,7 +190,8 @@ export const ClauseEditor: React.FC<Props> = ({
           <EditorHBox>
             {restriction && (
               <RestrictionEditor
-                attributeOptions={attributeOptions}
+                entityService={entityService}
+                featuredAttributes={featuredAttributes}
                 restriction={restriction}
                 onChange={handleRestrictionChange}
               />
@@ -208,7 +205,8 @@ export const ClauseEditor: React.FC<Props> = ({
             key={clause.id}
             clauses={nestedRestriction.clauses}
             depth={depth + 1}
-            attributeOptions={attributeOptions}
+            entityService={entityService}
+            featuredAttributes={featuredAttributes}
             onChange={handleClausesChange}
           />
         </div>

@@ -1,17 +1,19 @@
 import React from 'react';
 
-import { EntityAttributeOption, OrderConfig, OrderByConfig } from 'datasources/entity-ds/types';
+import { EntityService } from 'datasources/entity-ds/entity/service/EntityService';
+import { OrderConfig, OrderByConfig } from 'datasources/entity-ds/types';
 
-import { OrderEditor } from './OrderEditor';
 import { OrderByAttributeEditor } from './OrderByAttributeEditor';
+import { OrderEditor } from './OrderEditor';
 
 type Props = {
-  attributeOptions: EntityAttributeOption[];
+  entityService: EntityService;
+  featuredAttributes: boolean;
   orderBy: OrderByConfig;
   onChange: (value: OrderByConfig) => void;
 };
 
-export const OrderByEditor: React.FC<Props> = ({ attributeOptions, orderBy, onChange }) => {
+export const OrderByEditor: React.FC<Props> = ({ entityService, featuredAttributes, orderBy, onChange }) => {
   const { attribute, order } = orderBy;
 
   const handleAttributeChange = (attribute: string) => {
@@ -32,7 +34,8 @@ export const OrderByEditor: React.FC<Props> = ({ attributeOptions, orderBy, onCh
     <>
       <OrderByAttributeEditor
         attribute={attribute}
-        attributeOptions={attributeOptions}
+        entityService={entityService}
+        featuredAttributes={featuredAttributes}
         onChange={handleAttributeChange}
       />
       <OrderEditor order={order} onChange={handleOrderChange} />

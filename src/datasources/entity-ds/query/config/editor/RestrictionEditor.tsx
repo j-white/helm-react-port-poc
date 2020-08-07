@@ -1,54 +1,21 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { SearchPropertyType } from 'opennms-js-ts';
+import { EntityService } from 'datasources/entity-ds/entity/service/EntityService';
+import { ComparatorType, RestrictionConfig } from 'datasources/entity-ds/types';
 
-import { ComparatorConfig, EntityAttributeOption, RestrictionConfig } from 'datasources/entity-ds/types';
-
-import { ComparatorEditor } from './ComparatorEditor';
+import { RestrictionComparatorEditor } from './RestrictionComparatorEditor';
 import { RestrictionAttributeEditor } from './RestrictionAttributeEditor';
 import { RestrictionValueEditor } from './RestrictionValueEditor';
 
-import { comparatorOptions, fallbackComparatorOptions } from '../ComparatorConfig';
-
 type Props = {
-  attributeOptions: EntityAttributeOption[];
+  entityService: EntityService;
+  featuredAttributes: boolean;
   restriction: RestrictionConfig;
   onChange: (value: RestrictionConfig) => void;
 };
 
-export const RestrictionEditor: React.FC<Props> = ({ attributeOptions, restriction, onChange }) => {
+export const RestrictionEditor: React.FC<Props> = ({ entityService, featuredAttributes, restriction, onChange }) => {
   const { attribute, comparator, value } = restriction;
-
-  const attributeOption = useMemo(() => {
-    return attributeOptions.find(attributeOption => attributeOption.value === attribute);
-  }, [attribute]);
-
-  const attributeValueOptions = useMemo(() => {
-    if (attributeOption && attributeOption.values) {
-      const namesById = attributeOption.values;
-      return Object.keys(namesById).map(id => {
-        const name = namesById[id];
-        return {
-          label: name,
-          value: name,
-        };
-      });
-    } else {
-      return [];
-    }
-  }, [attributeOption]);
-
-  const attributeComparatorOptions = useMemo(() => {
-    if (attributeOption && attributeOption.type) {
-      const propertyType = SearchPropertyType.forId(attributeOption.type) as SearchPropertyType | undefined;
-      if (propertyType) {
-        // NOTE: Comparator::label corresponds to ComparatorOption::value
-        const comparatorValues = propertyType.getComparators().map(comparator => comparator.label);
-        return comparatorOptions.filter(comparatorOption => comparatorValues.includes(comparatorOption.value));
-      }
-    }
-    return fallbackComparatorOptions;
-  }, [attributeOption]);
 
   const handleAttributeChange = (attribute: string) => {
     onChange({
@@ -58,10 +25,10 @@ export const RestrictionEditor: React.FC<Props> = ({ attributeOptions, restricti
     });
   };
 
-  const handleComparatorChange = (comparator: ComparatorConfig) => {
+  const handleComparatorChange = (comparatorType: ComparatorType) => {
     onChange({
       ...restriction,
-      comparator,
+      comparator: { label: comparatorType },
     });
   };
 
@@ -76,22 +43,24 @@ export const RestrictionEditor: React.FC<Props> = ({ attributeOptions, restricti
     <>
       <RestrictionAttributeEditor
         attribute={attribute}
-        attributeOptions={attributeOptions}
+        entityService={entityService}
+        featuredAttributes={featuredAttributes}
         onChange={handleAttributeChange}
       />
-      <ComparatorEditor
-        comparator={comparator}
-        comparatorOptions={attributeComparatorOptions}
+      <RestrictionComparatorEditor
+        key={`${attribute}-comparator`}
+        attribute={attribute}
+        comparatorType={comparator.label}
         disabled={!attribute}
+        entityService={entityService}
         onChange={handleComparatorChange}
       />
       <RestrictionValueEditor
-        // NOTE: Grafana's select renders a stale label when options change and value is reset to "".
-        // Workaround: use "key" to force this component to be recreated when "attribute" changes.
-        key={attribute}
+        key={`${attribute}-value`}
+        attribute={attribute}
         disabled={!attribute}
+        entityService={entityService}
         value={value}
-        valueOptions={attributeValueOptions}
         onChange={handleValueChange}
       />
     </>

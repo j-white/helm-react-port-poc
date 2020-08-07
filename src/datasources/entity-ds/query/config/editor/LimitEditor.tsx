@@ -3,8 +3,8 @@ import { css } from 'emotion';
 
 import { Icon, InlineFormLabel, Input, Tooltip } from '@grafana/ui';
 
-import { EditorHBox } from 'common/components/EditorHBox';
-import { EditorRow } from 'common/components/EditorRow';
+import { EditorHBox } from './common/EditorHBox';
+import { EditorRow } from './common/EditorRow';
 
 const withWarningColor = css`
   color: rgb(229, 189, 28);

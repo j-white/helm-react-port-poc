@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from 'emotion';
 
-import { Select } from '@grafana/ui';
+import { EntityService } from 'datasources/entity-ds/entity/service/EntityService';
 
-import { EntityAttributeOption } from 'datasources/entity-ds/types';
+import { Autocomplete } from './common/Autocomplete';
 
 const withMinWidth = css`
   min-width: 144px;
@@ -11,25 +11,20 @@ const withMinWidth = css`
 
 type Props = {
   attribute: string;
-  attributeOptions: EntityAttributeOption[];
+  entityService: EntityService;
+  featuredAttributes: boolean;
   onChange: (value: string) => void;
 };
 
-export const RestrictionAttributeEditor: React.FC<Props> = ({ attribute, attributeOptions, onChange }) => {
-  const handleAttributeChange = (attribute: string) => {
-    onChange(attribute);
-  };
+export const RestrictionAttributeEditor: React.FC<Props> = ({
+  attribute,
+  entityService,
+  featuredAttributes,
+  onChange,
+}) => {
+  const loadValues = useMemo(() => {
+    return () => entityService.autocompleteAttribute(featuredAttributes);
+  }, [featuredAttributes]);
 
-  return (
-    <Select
-      className={withMinWidth}
-      menuPosition="fixed"
-      options={attributeOptions}
-      placeholder="Select attribute..."
-      value={attribute}
-      // @ts-ignore
-      width="auto"
-      onChange={v => v.value && handleAttributeChange(v.value)}
-    />
-  );
+  return <Autocomplete className={withMinWidth} value={attribute} loadValues={loadValues} onChange={onChange} />;
 };

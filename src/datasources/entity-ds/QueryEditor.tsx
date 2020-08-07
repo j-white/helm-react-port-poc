@@ -1,16 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { LegacyForms } from '@grafana/ui';
 
-import { EditorGroup } from 'common/components/EditorGroup';
+import { EditorGroup } from 'datasources/entity-ds/query/config/editor/common/EditorGroup';
 
 import { createDefaultFilter, defaultEntityQuery } from './defaults';
 import { ClauseConfig, EntityDataSourceOptions, EntityQuery, EntityType, OrderByConfig } from './types';
 
 import { DataSource } from './DataSource';
-
-import { alarmAttributeOptions } from './mock/MockAttributeOptions';
 
 import { ClausesEditor } from './query/config/editor/ClausesEditor';
 import { EntityTypeEditor } from './query/config/editor/EntityTypeEditor';
@@ -23,9 +21,7 @@ const featuredAttributesTooltip = 'Toggles whether featured attributes or all at
 
 type Props = QueryEditorProps<DataSource, EntityQuery, EntityDataSourceOptions>;
 
-const attributeOptions = alarmAttributeOptions;
-
-export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) => {
+export const QueryEditor: React.FC<Props> = ({ datasource, query, onChange, onRunQuery }) => {
   const {
     featuredAttributes = defaultEntityQuery.featuredAttributes,
     statement = defaultEntityQuery.statement,
@@ -36,8 +32,10 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
   const { entityType, filter = createDefaultFilter() } = statement;
   const { clauses, limit, orderBy } = filter;
 
+  const entityService = useMemo(() => datasource.getEntityService(entityType), [datasource, entityType]);
+
   const handleEntityTypeChange = (entityType: EntityType) => {
-    onChange({ ...query, statement: { ...statement, entityType } });
+    onChange({ ...query, statement: { ...defaultEntityQuery.statement, entityType } });
     onRunQuery();
   };
 
@@ -83,8 +81,19 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) =>
     <>
       <EditorGroup>
         <EntityTypeEditor entityType={entityType} onChange={handleEntityTypeChange} />
-        <ClausesEditor attributeOptions={attributeOptions} clauses={clauses} depth={0} onChange={handleClausesChange} />
-        <OrderBysEditor attributeOptions={attributeOptions} orderBys={orderBy} onChange={handleOrderBysChange} />
+        <ClausesEditor
+          clauses={clauses}
+          depth={0}
+          entityService={entityService}
+          featuredAttributes={featuredAttributes}
+          onChange={handleClausesChange}
+        />
+        <OrderBysEditor
+          entityService={entityService}
+          featuredAttributes={featuredAttributes}
+          orderBys={orderBy}
+          onChange={handleOrderBysChange}
+        />
         <LimitEditor limit={limit} onChange={handleLimitChange} />
       </EditorGroup>
       <EditorGroup>

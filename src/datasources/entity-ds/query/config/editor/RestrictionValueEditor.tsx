@@ -1,47 +1,34 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from 'emotion';
 
-import { Input, Select } from '@grafana/ui';
+import { EntityService } from 'datasources/entity-ds/entity/service/EntityService';
 
-import { EntityAttributeValueOption } from 'datasources/entity-ds/types';
+import { Autocomplete } from './common/Autocomplete';
 
 const withMinWidth = css`
   min-width: 144px;
 `;
 
 type Props = {
+  attribute: string;
   disabled?: boolean;
+  entityService: EntityService;
   value: string;
-  valueOptions: EntityAttributeValueOption[];
   onChange: (value: string) => void;
 };
 
-export const RestrictionValueEditor: React.FC<Props> = ({ disabled, value, valueOptions, onChange }) => {
-  const handleValueChange = (value: string) => {
-    onChange(value);
-  };
+export const RestrictionValueEditor: React.FC<Props> = ({ attribute, disabled, entityService, value, onChange }) => {
+  const loadValues = useMemo(() => {
+    return () => entityService.autocompleteAttributeValue(attribute);
+  }, [attribute]);
 
-  if (valueOptions.length > 0) {
-    return (
-      <Select
-        className={withMinWidth}
-        disabled={disabled}
-        options={valueOptions}
-        value={value}
-        // @ts-ignore
-        width="auto"
-        onChange={v => v.value && handleValueChange(v.value)}
-      />
-    );
-  } else {
-    return (
-      <Input
-        disabled={disabled}
-        value={value}
-        // @ts-ignore
-        width="auto"
-        onChange={e => handleValueChange(e.currentTarget.value)}
-      />
-    );
-  }
+  return (
+    <Autocomplete
+      className={withMinWidth}
+      disabled={disabled}
+      value={value}
+      loadValues={loadValues}
+      onChange={onChange}
+    />
+  );
 };
