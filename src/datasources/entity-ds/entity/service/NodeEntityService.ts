@@ -30,12 +30,6 @@ const featuredAttributeAutocompleteValues: string[] = columns
   .filter(column => column.resource)
   .map(column => column.resource!);
 
-const booleanAutocompleteValues: string[] = ['false', 'true'];
-
-const severityAutocompleteValues: string[] = Object.values(Severities).map(severity => {
-  return severity.label;
-});
-
 export class NodeEntityService implements EntityService {
   datasource: DataSource;
 

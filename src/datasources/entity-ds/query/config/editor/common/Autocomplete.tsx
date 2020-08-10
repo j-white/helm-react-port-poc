@@ -17,17 +17,13 @@ interface AutocompleteOption {
 
 export const Autocomplete: React.FC<Props> = ({ className, disabled, loadValues, value, onChange }) => {
   const handleBlur = (proposedValue: string) => {
-    console.log('handleBlur', proposedValue);
     if (proposedValue !== value) {
-      console.log('onChange', value);
       onChange(proposedValue);
     }
   };
   
   const handleChange = (proposedValue: string) => {
-    console.log('handleChange', proposedValue);
     if (proposedValue !== value) {
-      console.log('onChange', value);
       onChange(proposedValue);
     }
   };

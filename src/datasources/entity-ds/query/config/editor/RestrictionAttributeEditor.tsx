@@ -26,5 +26,5 @@ export const RestrictionAttributeEditor: React.FC<Props> = ({
     return () => entityService.autocompleteAttribute(featuredAttributes);
   }, [featuredAttributes]);
 
-  return <Autocomplete className={withMinWidth} value={attribute} loadValues={loadValues} onChange={onChange} />;
+  return <Autocomplete className={withMinWidth} loadValues={loadValues} value={attribute} onChange={onChange} />;
 };

@@ -1,8 +1,13 @@
 import React, { useMemo } from 'react';
+import { css } from 'emotion';
 
 import { EntityService } from 'datasources/entity-ds/entity/service/EntityService';
 
 import { Autocomplete } from './common/Autocomplete';
+
+const withMinWidth = css`
+  min-width: 144px;
+`;
 
 type Props = {
   attribute: string;
@@ -16,5 +21,5 @@ export const OrderByAttributeEditor: React.FC<Props> = ({ attribute, entityServi
     return () => entityService.autocompleteAttribute(featuredAttributes);
   }, [featuredAttributes]);
 
-  return <Autocomplete value={attribute} loadValues={loadValues} onChange={onChange} />;
+  return <Autocomplete className={withMinWidth} loadValues={loadValues} value={attribute} onChange={onChange} />;
 };
