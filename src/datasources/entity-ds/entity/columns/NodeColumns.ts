@@ -26,5 +26,4 @@ export const columns: EntityColumn[] = [
   { text: 'Primary IP Interface', resource: 'ipInterface.ipAddress' },
   /* { text: 'Primary IP Hostname', resource: 'ipInterface.ipHostname' }, */
   { text: 'Categories', resource: 'category.name', featured: true },
-  { text: 'Data Source' },
 ];

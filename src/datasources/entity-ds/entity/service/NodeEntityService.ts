@@ -1,4 +1,6 @@
-import { Client, Filter, Severities } from 'opennms-js-ts';
+import { MutableDataFrame, FieldDTO } from '@grafana/data';
+
+import { Client, Filter, OnmsNode } from 'opennms-js-ts';
 
 import { invert } from 'common/Dictionary';
 
@@ -7,7 +9,7 @@ import { columns } from 'datasources/entity-ds/entity/columns/NodeColumns';
 import { fallbackComparators } from 'datasources/entity-ds/query/config/ComparatorConfig';
 import { ComparatorType } from 'datasources/entity-ds/types';
 
-import { EntityService } from './EntityService';
+import { EntityService, fieldForEntityColumn } from './EntityService';
 
 const attributesByAlias: Record<string, string> = {
   category: 'category.name',
@@ -29,6 +31,10 @@ const featuredAttributeAutocompleteValues: string[] = columns
   .filter(column => column.featured)
   .filter(column => column.resource)
   .map(column => column.resource!);
+
+function getPrimaryIpInterface(node: OnmsNode) {
+  return node.ipInterfaces?.find(ipInterface => ipInterface.snmpPrimary?.isPrimary());
+}
 
 export class NodeEntityService implements EntityService {
   datasource: DataSource;
@@ -91,14 +97,54 @@ export class NodeEntityService implements EntityService {
     return values.filter(value => value !== null).map(value => value);
   }
 
-  async query(filter: Filter): Promise<any[]> {
-    // TODO: rename opennmsClient back in DataSource?
+  async query(refId: string, filter: Filter): Promise<MutableDataFrame> {
+    const client = await this.getClient();
+    const nodes = (await client.nodes().find(filter)) ?? [];
 
-    // TODO: implement
-    // const alarms = await this.datasource.opennmsClient.findAlarms(filter);
+    var fields: FieldDTO[] = [
+      ...columns.filter(column => column.visible !== false).map(column => fieldForEntityColumn(column)),
+    ];
 
-    // TODO: post-processing
+    const frame = new MutableDataFrame({
+      refId,
+      fields,
+    });
 
-    return [];
+    for (const node of nodes) {
+      const primaryIpInterface = getPrimaryIpInterface(node);
+      const primarySnmp = primaryIpInterface?.snmpInterface;
+
+      frame.add({
+        id: node.id,
+        label: node.label,
+        labelSource: node.labelSource?.label,
+        foreignSource: node.foreignSource,
+        foreignId: node.foreignId,
+        'location.locationName': node.location,
+        createTime: node.createTime,
+        'parent.id': node.parent?.id,
+        'parent.foreignSource': node.parent?.foreignSource,
+        'parent.foreignId': node.parent?.foreignId,
+        type: node.type?.toDisplayString(),
+        sysObjectId: node.sysObjectId,
+        sysName: node.sysName,
+        sysDescription: node.sysDescription,
+        sysLocation: node.sysLocation,
+        sysContact: node.sysContact,
+        netBiosName: node.netBiosName,
+        netBiosDomain: node.netBiosDomain,
+        operatingSystem: node.operatingSystem,
+        lastCapsdPoll: node.lastCapsdPoll,
+        /* 'ipInterface.snmpInterface.physAddr': primarySnmp.physAddr?.toString(), */
+        'snmpInterface.ifIndex': primarySnmp?.ifIndex,
+        'ipInterface.ipAddress': primaryIpInterface?.ipAddress?.correctForm(),
+        /* 'ipInterface.ipHostname': primaryIpInterface?.ipHostname, */
+        'category.name': node.categories?.map(category => category.name),
+      });
+    }
+
+    // TODO: meta data
+
+    return frame;
   }
 }

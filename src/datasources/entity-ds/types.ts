@@ -123,7 +123,7 @@ export interface EntityOrderAttributeOption {
 
 export interface EntityColumn {
   text: string;
-  resource?: string;
+  resource: string;
   featured?: boolean;
   visible?: boolean;
 }

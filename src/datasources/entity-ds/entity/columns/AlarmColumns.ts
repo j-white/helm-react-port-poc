@@ -47,5 +47,4 @@ export const columns: EntityColumn[] = [
   { text: 'Managed Object Instance', resource: 'managedObjectInstance' },
   { text: 'Managed Object Type', resource: 'managedObjectType' },
   { text: 'Categories', resource: 'category', featured: true, visible: false },
-  { text: 'Data Source' },
 ];
