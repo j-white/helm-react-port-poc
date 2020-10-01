@@ -143,7 +143,7 @@ export class NodeEntityService implements EntityService {
       });
     }
 
-    // TODO: meta data
+    // TODO: add any additional meta data required by panel plugins, as necessary
 
     return frame;
   }

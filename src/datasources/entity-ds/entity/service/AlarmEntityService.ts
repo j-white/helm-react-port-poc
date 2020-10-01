@@ -151,7 +151,7 @@ export class AlarmEntityService implements EntityService {
       ...parameterNames.map(parameterName => fieldForParameterName(parameterName)),
     ];
 
-    // TODO: To add links to rows in a field's column, in field config:
+    // TODO: To add links to rows in a field's column, in field config as defaults for Grafana Table panel:
     /*
     links: [
       {
@@ -227,7 +227,7 @@ export class AlarmEntityService implements EntityService {
       });
     }
 
-    // TODO: meta data
+    // TODO: add any additional meta data required by panel plugins, as necessary
 
     return frame;
   }

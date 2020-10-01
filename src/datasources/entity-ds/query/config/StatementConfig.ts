@@ -6,48 +6,76 @@ import {
   FilterConfig,
   OrderByConfig,
   NestedRestrictionConfig,
+  RestrictionConfig,
 } from 'datasources/entity-ds/types';
 
 import { isNestedClause, isPopulated as isPopulatedClause } from './ClauseConfig';
 import { isPopulated as isPopulatedOrderBy } from './OrderByConfig';
 
-function sanitizeClauses(clauses: ClauseConfig[]): ClauseConfig[] {
+function prepareRestriction(restriction: RestrictionConfig, options: PrepareStatementOptions): RestrictionConfig {
+  const { attribute, comparator, value } = restriction;
+  return {
+    attribute: options.fromAttributeAlias(attribute),
+    comparator,
+    value: options.interpolateVariables(value),
+  };
+}
+
+function prepareClauses(clauses: ClauseConfig[], options: PrepareStatementOptions): ClauseConfig[] {
   return clauses.filter(isPopulatedClause).map(clause => {
+    const { id, operator, restriction } = clause;
     if (isNestedClause(clause)) {
-      const { id, operator, restriction } = clause;
       const { clauses } = restriction as NestedRestrictionConfig;
       return {
         id,
         operator,
         restriction: {
-          clauses: sanitizeClauses(clauses),
+          clauses: prepareClauses(clauses, options),
         },
       };
     } else {
-      return clause;
+      return {
+        id,
+        operator,
+        restriction: prepareRestriction(restriction as RestrictionConfig, options),
+      };
     }
   });
 }
 
-function sanitizeOrderBys(orderBys: OrderByConfig[]): OrderByConfig[] {
-  return orderBys.filter(isPopulatedOrderBy);
+function prepareOrderBy(orderBy: OrderByConfig, options: PrepareStatementOptions): OrderByConfig {
+  const { id, attribute, order } = orderBy;
+  return {
+    id,
+    attribute: options.fromAttributeAlias(attribute),
+    order,
+  };
 }
 
-function sanitizeFilter(filter: FilterConfig): FilterConfig {
+function prepareOrderBys(orderBys: OrderByConfig[], options: PrepareStatementOptions): OrderByConfig[] {
+  return orderBys.filter(isPopulatedOrderBy).map(orderBy => prepareOrderBy(orderBy, options));
+}
+
+function prepareFilter(filter: FilterConfig, options: PrepareStatementOptions): FilterConfig {
   const { clauses, orderBy, limit } = filter;
 
   return {
-    clauses: sanitizeClauses(clauses),
-    orderBy: sanitizeOrderBys(orderBy),
+    clauses: prepareClauses(clauses, options),
+    orderBy: prepareOrderBys(orderBy, options),
     limit,
   };
 }
 
-export function sanitizeStatement(statement: StatementConfig): StatementConfig {
+export interface PrepareStatementOptions {
+  fromAttributeAlias: (alias: string) => string;
+  interpolateVariables: (value: string) => string;
+}
+
+export function prepareStatement(statement: StatementConfig, options: PrepareStatementOptions): StatementConfig {
   const { entityType, filter = createDefaultFilter() } = statement;
 
   return {
     entityType: entityType,
-    filter: sanitizeFilter(filter),
+    filter: prepareFilter(filter, options),
   };
 }

@@ -5,6 +5,7 @@ import {
   DataSourceInstanceSettings,
   TimeRange,
 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { Comparators, Filter, NestedRestriction, Restriction } from 'opennms-js-ts';
 
@@ -17,7 +18,7 @@ import { Statement } from './query/Statement';
 
 import { ClientDelegate } from 'common/ClientDelegate';
 
-import { sanitizeStatement } from './query/config/StatementConfig';
+import { prepareStatement, PrepareStatementOptions } from './query/config/StatementConfig';
 
 import { AlarmEntityService } from './entity/service/AlarmEntityService';
 import { EntityService } from './entity/service/EntityService';
@@ -42,7 +43,11 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
   getQueryDisplayText(query: EntityQuery): string {
     try {
       const statementConfig = query.statement ? query.statement : defaultEntityQuery.statement;
-      const statement = Statement.fromJson(sanitizeStatement(statementConfig));
+      const statementOptions: PrepareStatementOptions = {
+        fromAttributeAlias: (alias: string) => alias,
+        interpolateVariables: (value: string) => value,
+      };
+      const statement = Statement.fromJson(prepareStatement(statementConfig, statementOptions));
       return getStatementDisplayText(Statement.fromJson(statement));
     } catch (error) {
       return `ERROR: ${error}`;
@@ -56,9 +61,12 @@ export class DataSource extends DataSourceApi<EntityQuery, EntityDataSourceOptio
         const entityType = statementConfig.entityType;
         const entityService = this.getEntityService(entityType);
 
-        // TODO: Refactor variable substitution into sanitizeStatement() via new Grafana service
-        const statement = Statement.fromJson(sanitizeStatement(statementConfig));
-        console.log('statement (sanitized):', JSON.stringify(statement, null, 2));
+        const statementOptions: PrepareStatementOptions = {
+          fromAttributeAlias: (alias: string) => entityService.fromAttributeAlias(alias),
+          interpolateVariables: (value: string) => getTemplateSrv().replace(value, options.scopedVars),
+        };
+        const statement = Statement.fromJson(prepareStatement(statementConfig, statementOptions));
+        console.log('statement (prepared):', JSON.stringify(statement, null, 2));
 
         const filter = this.applyRange(entityType, statement.filter, options.range);
         return entityService.query(target.refId, filter);

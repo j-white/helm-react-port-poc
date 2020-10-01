@@ -18,7 +18,7 @@ export interface EntityService {
 export function fieldForEntityColumn(column: EntityColumn): FieldDTO {
   return {
     name: column.resource,
-    // TODO: type: column.type, (where this is FieldType value)
+    // TODO: type: column.type, (as desired FieldType value)
     config: {
       displayName: column.text,
     },
